@@ -146,7 +146,7 @@ inline su2double CSmagorinskyModel::ComputeEddyViscosity_2D(const su2double rho,
   const su2double strain_rate2 = 2.0*(dudx*dudx + dvdy*dvdy + 2.0*S12*S12);
 
   /* Return the SGS dynamic viscosity. */
-  return C_s_filter_width*C_s_filter_width*sqrt(rho*strain_rate2);
+  return rho*C_s_filter_width*C_s_filter_width*sqrt(strain_rate2);
 }
 
 inline su2double CSmagorinskyModel::ComputeEddyViscosity_3D(const su2double rho,
@@ -177,7 +177,7 @@ inline su2double CSmagorinskyModel::ComputeEddyViscosity_3D(const su2double rho,
                                +      2.0*(S12*S12 + S13*S13 + S23*S23));
 
   /* Return the SGS dynamic viscosity. */
-  return C_s_filter_width*C_s_filter_width*sqrt(rho*strain_rate2);
+  return rho*C_s_filter_width*C_s_filter_width*sqrt(strain_rate2);
 }
 
 inline void CSmagorinskyModel::ComputeGradEddyViscosity_2D(const su2double rho,
@@ -241,7 +241,11 @@ inline void CSmagorinskyModel::ComputeGradEddyViscosity_3D(const su2double rho,
   exit(1);
 }
 
-inline CWALEModel::CWALEModel(void) : CSGSModel() {}
+inline CWALEModel::CWALEModel(void) : CSGSModel() {
+  const_smag = 0.1;
+  const_mult = 2.5;
+}
+
 inline CWALEModel::~CWALEModel(void){}
 
 inline su2double CWALEModel::ComputeEddyViscosity_2D(const su2double rho,
@@ -251,8 +255,39 @@ inline su2double CWALEModel::ComputeEddyViscosity_2D(const su2double rho,
                                                      const su2double dvdy,
                                                      const su2double lenScale,
                                                      const su2double distToWall) {
-  cout << "CWALEModel::ComputeEddyViscosity_2D: Not implemented yet" << endl;
-  exit(1);
+  /*!
+   * The WALE sgs viscosity is calculated:
+   * C_wale * sqrt( B_beta / (alpha_ij * alpha_ij) )
+   * alpha_ij = du_j / dx_i
+   * B_beta = beta_11*beta_22 - beta_12^2 + beta_11*beta_33 - beta_13^2 + beta_22*beta_33 - beta_23^2
+   * beta_ij = delta_m^2 * alpha_mi * alpha_mi
+   * C_wale = 2.5 * C_smagorinsky^2;
+   * delta = min(lenScale, distToWall)
+   */
+
+  /* Determine the length scale to use. This is the lesser of the characteristic
+   * element length scale or the distance to the wall
+   */
+  su2double delta = std::min(lenScale,distToWall);
+  su2double delta_2 = delta*delta;
+
+  /* Calculate two-dimensional beta values */
+  su2double beta_11 = delta_2 * ( dudx*dudx + dudy*dudy );
+  su2double beta_22 = delta_2 * ( dvdx*dvdx + dvdy*dvdy );
+  su2double beta_12 = delta_2 * ( dudx*dvdx + dudy*dvdy );
+
+  /* Calculate B_beta */
+  su2double B_beta = beta_11*beta_22 - beta_12*beta_12;
+
+  /* Calculate denominator (sum of squares of velocity gradients) */
+  su2double sum_veloc_gradients_2 = ( dudx*dudx + dudy*dudy + dvdx*dvdx + dvdy*dvdy );
+
+  /* Calculate C_wale */
+  su2double C_wale = const_mult * const_smag * const_smag;
+
+  /* Return the WALE SGS dynamic viscosity */
+
+  return rho * C_wale * sqrt(B_beta / sum_veloc_gradients_2);
 }
 
 inline su2double CWALEModel::ComputeEddyViscosity_3D(const su2double rho,
@@ -267,8 +302,43 @@ inline su2double CWALEModel::ComputeEddyViscosity_3D(const su2double rho,
                                                      const su2double dwdz,
                                                      const su2double lenScale,
                                                      const su2double distToWall) {
-  cout << "CWALEModel::ComputeEddyViscosity_3D: Not implemented yet" << endl;
-  exit(1);
+  /*!
+   * The WALE sgs viscosity is calculated:
+   * C_wale * sqrt( B_beta / (alpha_ij * alpha_ij) )
+   * alpha_ij = du_j / dx_i
+   * B_beta = beta_11*beta_22 - beta_12^2 + beta_11*beta_33 - beta_13^2 + beta_22*beta_33 - beta_23^2
+   * beta_ij = delta_m^2 * alpha_mi * alpha_mi
+   * C_wale = 2.5 * C_smagorinsky^2;
+   * delta = min(lenScale, distToWall)
+   */
+
+  /* Determine the length scale to use. This is the lesser of the characteristic
+   * element length scale or the distance to the wall
+   */
+  su2double delta = std::min(lenScale,distToWall);
+  su2double delta_2 = delta*delta;
+
+  /* Calculate three-dimensional beta values */
+  su2double beta_11 = delta_2 * ( dudx*dudx + dudy*dudy + dudz*dudz );
+  su2double beta_22 = delta_2 * ( dvdx*dvdx + dvdy*dvdy + dvdz*dvdz );
+  su2double beta_33 = delta_2 * ( dwdx*dwdx + dwdy*dwdy + dwdz*dwdz );
+
+  su2double beta_12 = delta_2 * ( dudx*dvdx + dudy*dvdy + dudz*dvdz );
+  su2double beta_13 = delta_2 * ( dudx*dwdx + dudy*dwdy + dudz*dwdz );
+  su2double beta_23 = delta_2 * ( dvdx*dwdx + dvdy*dwdy + dvdz*dwdz );
+
+  /* Calculate B_beta */
+  su2double B_beta = beta_11*beta_22 - beta_12*beta_12 + beta_11*beta_33 - beta_13*beta_13 + beta_22*beta_33 - beta_23*beta_23;
+
+  /* Calculate denominator (sum of squares of velocity gradients) */
+  su2double sum_veloc_gradients_2 = ( dudx*dudx + dudy*dudy + dudz*dudz + dvdx*dvdx + dvdy*dvdy + dvdz*dvdz + dwdx*dwdx + dwdy*dwdy + dwdz*dwdz );
+
+  /* Calculate C_wale */
+  su2double C_wale = const_mult * const_smag * const_smag;
+
+  /* Return the WALE SGS dynamic viscosity */
+
+  return rho * C_wale * sqrt(B_beta / sum_veloc_gradients_2);
 }
 
 inline void CWALEModel::ComputeGradEddyViscosity_2D(const su2double rho,

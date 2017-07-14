@@ -421,9 +421,12 @@ public:
  * \author: E. van der Weide, T. Economon, P. Urbanczyk
  * \version 5.0.0 "Raven"
  */
-class CWALEModel : public CSGSModel {
+class CWALEModel: public CSGSModel {
 
 public:
+
+  su2double const_smag; /*!< \brief Smagorinsky Constant C_s.  */
+  su2double const_mult; /*!< \brief Multiplier for smagorinsky constant. */
   /*!
    * \brief Constructor of the class.
    */
@@ -436,7 +439,7 @@ public:
 
   /*!
    * \brief Function to determine the eddy viscosity for
-            the given function arguments for a 2D simulation.
+   the given function arguments for a 2D simulation.
    * \param[in] rho        - Density
    * \param[in] dudx       - x-derivative of the u-velocity.
    * \param[in] dudy       - y-derivative of the u-velocity.
