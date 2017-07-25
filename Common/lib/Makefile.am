@@ -57,6 +57,7 @@ lib_sources = \
   ../include/datatypes/complex_structure.inl \
   ../include/ad_structure.hpp \
   ../include/ad_structure.inl \
+  ../include/cgns_elements.hpp \
   ../include/config_structure.hpp \
   ../include/config_structure.hpp \
   ../include/config_structure.inl \
@@ -98,6 +99,7 @@ lib_sources = \
   ../include/element_structure.inl \
   ../include/adt_structure.hpp \
   ../include/adt_structure.inl \
+  ../src/cgns_elements.cpp \
   ../src/config_structure.cpp \
   ../src/dense_matrix_product.cpp \
   ../src/dual_grid_structure.cpp \

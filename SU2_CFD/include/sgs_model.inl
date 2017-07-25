@@ -37,12 +37,12 @@ inline CSGSModel::CSGSModel(void){}
 inline CSGSModel::~CSGSModel(void){}
 
 inline su2double CSGSModel::ComputeEddyViscosity_2D(const su2double rho,
-                                                   const su2double dudx,
-                                                   const su2double dudy,
-                                                   const su2double dvdx,
-                                                   const su2double dvdy,
-                                                   const su2double lenScale,
-                                                   const su2double distToWall) {
+                                                    const su2double dudx,
+                                                    const su2double dudy,
+                                                    const su2double dvdx,
+                                                    const su2double dvdy,
+                                                    const su2double lenScale,
+                                                    const su2double distToWall) {
   return 0.0;
 }
 
