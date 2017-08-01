@@ -432,7 +432,7 @@ CMeshFEM::CMeshFEM(CGeometry *geometry, CConfig *config) {
 #ifdef HAVE_MPI
 
   /*--- Parallel mode. Send all the data using non-blocking sends. ---*/
-  vector<MPI_Request> commReqs(3*nRankSend);
+  vector<SU2_MPI::Request> commReqs(3*nRankSend);
   MI = rankToIndCommBuf.begin();
 
   for(int i=0; i<nRankSend; ++i, ++MI) {
@@ -3278,7 +3278,7 @@ void CMeshFEM_DG::SetSendReceive(CConfig *config) {
   entitiesSend.resize(nRankSend);
 
   /*--- Send all the data using non-blocking sends. ---*/
-  vector<MPI_Request> commReqs(ranksRecv.size());
+  vector<SU2_MPI::Request> commReqs(ranksRecv.size());
 
   for(unsigned long i=0; i<ranksRecv.size(); ++i) {
     int dest = ranksRecv[i];
@@ -5036,8 +5036,8 @@ void CMeshFEM_DG::LengthScaleVolumeElements(void) {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
   /*--- Define the buffers needed for the communication. ---*/
-  vector<MPI_Request> sendRequests(ranksSend.size());
-  vector<MPI_Request> recvRequests(ranksRecv.size());
+  vector<SU2_MPI::Request> sendRequests(ranksSend.size());
+  vector<SU2_MPI::Request> recvRequests(ranksRecv.size());
 
   vector<vector<su2double> > sendBuf(ranksSend.size());
   vector<vector<su2double> > recvBuf(ranksRecv.size());

@@ -748,19 +748,19 @@ CFEM_DG_EulerSolver::~CFEM_DG_EulerSolver(void) {
         data types. ---*/
   for(unsigned long i=0; i<commRequests.size(); ++i) {
     for(unsigned long j=0; j<commRequests[i].size(); ++j)
-      MPI_Request_free(&commRequests[i][j]);
+      SU2_MPI::Request_free(&commRequests[i][j]);
   }
 
   for(unsigned long i=0; i<commTypes.size(); ++i)
-    MPI_Type_free(&commTypes[i]);
+    SU2_MPI::Type_free(&commTypes[i]);
 
   for(unsigned long i=0; i<reverseCommRequests.size(); ++i) {
     for(unsigned long j=0; j<reverseCommRequests[i].size(); ++j)
-      MPI_Request_free(&reverseCommRequests[i][j]);
+      SU2_MPI::Request_free(&reverseCommRequests[i][j]);
   }
 
   for(unsigned int i=0; i<reverseCommTypes.size(); ++i)
-     MPI_Type_free(&reverseCommTypes[i]);
+     SU2_MPI::Type_free(&reverseCommTypes[i]);
 
 #endif
 }
@@ -1402,7 +1402,7 @@ void CFEM_DG_EulerSolver::DetermineGraphDOFs(const CMeshFEM *FEMGeometry,
   vector<vector<unsigned long> > sendBuf;
   sendBuf.resize(ranksSend.size());
 
-  vector<MPI_Request> sendReqs(ranksSend.size());
+  vector<SU2_MPI::Request> sendReqs(ranksSend.size());
 
   for(unsigned i=0; i<ranksSend.size(); ++i) {
 
@@ -1436,7 +1436,7 @@ void CFEM_DG_EulerSolver::DetermineGraphDOFs(const CMeshFEM *FEMGeometry,
     int source = status.MPI_SOURCE;
 
     int sizeMess;
-    MPI_Get_count(&status, MPI_UNSIGNED_LONG, &sizeMess);
+    SU2_MPI::Get_count(&status, MPI_UNSIGNED_LONG, &sizeMess);
 
     /* Allocate the memory for the receive buffer, receive the message
        and determine the actual index of this rank in ranksRecv. */
@@ -1553,7 +1553,7 @@ void CFEM_DG_EulerSolver::DetermineGraphDOFs(const CMeshFEM *FEMGeometry,
   vector<vector<unsigned long> > invSendBuf;
   invSendBuf.resize(ranksRecv.size());
 
-  vector<MPI_Request> invSendReqs(ranksRecv.size());
+  vector<SU2_MPI::Request> invSendReqs(ranksRecv.size());
 
   for(unsigned i=0; i<ranksRecv.size(); ++i) {
 
@@ -1592,7 +1592,7 @@ void CFEM_DG_EulerSolver::DetermineGraphDOFs(const CMeshFEM *FEMGeometry,
     int source = status.MPI_SOURCE;
 
     int sizeMess;
-    MPI_Get_count(&status, MPI_UNSIGNED_LONG, &sizeMess);
+    SU2_MPI::Get_count(&status, MPI_UNSIGNED_LONG, &sizeMess);
 
     /* Allocate the memory for the receive buffer, receive the message
        and determine the actual index of this rank in ranksSend. */
@@ -1765,7 +1765,7 @@ void CFEM_DG_EulerSolver::MetaDataJacobianComputation(const CMeshFEM    *FEMGeom
 
   /*--- Loop over the ranks to which this rank has to send data.
         Use non-blocking sends to avoid deadlock. ---*/
-  vector<MPI_Request> sendReqs(rankCommToInd.size());
+  vector<SU2_MPI::Request> sendReqs(rankCommToInd.size());
 
   map<int,int>::const_iterator MI = rankCommToInd.begin();
   for(unsigned long i=0; i<rankCommToInd.size(); ++i, ++MI) {
@@ -1778,7 +1778,7 @@ void CFEM_DG_EulerSolver::MetaDataJacobianComputation(const CMeshFEM    *FEMGeom
 
   /* Loop over the ranks from which I receive data to be processed. The number
      of ranks is equal to the number of ranks to which I just sent data. */
-  vector<MPI_Request> sendReturnReqs(rankCommToInd.size());
+  vector<SU2_MPI::Request> sendReturnReqs(rankCommToInd.size());
   vector<vector<int> > sendReturnBuf(rankCommToInd.size(), vector<int>(0));
   for(unsigned long i=0; i<rankCommToInd.size(); ++i) {
 
@@ -1789,7 +1789,7 @@ void CFEM_DG_EulerSolver::MetaDataJacobianComputation(const CMeshFEM    *FEMGeom
     int source = status.MPI_SOURCE;
 
     int sizeMess;
-    MPI_Get_count(&status, MPI_UNSIGNED_LONG, &sizeMess);
+    SU2_MPI::Get_count(&status, MPI_UNSIGNED_LONG, &sizeMess);
 
     /* Allocate the memory for the receive buffer as well as for the
        return send buffer. Receive the message afterwards. */
@@ -2629,15 +2629,15 @@ void CFEM_DG_EulerSolver::Prepare_MPI_Communication(const CMeshFEM *FEMGeometry,
           }
         }
 
-        MPI_Type_indexed(nElemSend*nTimeDOFs, blockLen.data(), displ.data(),
-                         MPI_DOUBLE, &commTypes[nn]);
-        MPI_Type_commit(&commTypes[nn]);
+        SU2_MPI::Type_indexed(nElemSend*nTimeDOFs, blockLen.data(), displ.data(),
+                              MPI_DOUBLE, &commTypes[nn]);
+        SU2_MPI::Type_commit(&commTypes[nn]);
 
         /* Create the communication request for this send operation and
            update the counters nn and mm for the next request.  */
         int tag = ranksSend[i] + level;
-        MPI_Send_init(commData, 1, commTypes[nn], ranksSend[i],
-                      tag, MPI_COMM_WORLD, &commRequests[level][mm]);
+        SU2_MPI::Send_init(commData, 1, commTypes[nn], ranksSend[i],
+                           tag, MPI_COMM_WORLD, &commRequests[level][mm]);
         ++nn;
         ++mm;
       }
@@ -2662,15 +2662,15 @@ void CFEM_DG_EulerSolver::Prepare_MPI_Communication(const CMeshFEM *FEMGeometry,
           }
         }
 
-        MPI_Type_indexed(nElemRecv*nTimeDOFs, blockLen.data(), displ.data(),
-                         MPI_DOUBLE, &commTypes[nn]);
-        MPI_Type_commit(&commTypes[nn]);
+        SU2_MPI::Type_indexed(nElemRecv*nTimeDOFs, blockLen.data(), displ.data(),
+                              MPI_DOUBLE, &commTypes[nn]);
+        SU2_MPI::Type_commit(&commTypes[nn]);
 
         /* Create the communication request for this receive operation and
            update the counters nn and mm for the next request.  */
         int tag = rank + level;
-        MPI_Recv_init(commData, 1, commTypes[nn], ranksRecv[i],
-                      tag, MPI_COMM_WORLD, &commRequests[level][mm]);
+        SU2_MPI::Recv_init(commData, 1, commTypes[nn], ranksRecv[i],
+                           tag, MPI_COMM_WORLD, &commRequests[level][mm]);
         ++nn;
         ++mm;
       }
@@ -2730,15 +2730,15 @@ void CFEM_DG_EulerSolver::Prepare_MPI_Communication(const CMeshFEM *FEMGeometry,
           displ[j]    = nVar*volElem[jj].offsetDOFsSolLocal;
         }
 
-        MPI_Type_indexed(nElemSend, blockLen.data(), displ.data(),
-                         MPI_DOUBLE, &reverseCommTypes[nn]);
-        MPI_Type_commit(&reverseCommTypes[nn]);
+        SU2_MPI::Type_indexed(nElemSend, blockLen.data(), displ.data(),
+                              MPI_DOUBLE, &reverseCommTypes[nn]);
+        SU2_MPI::Type_commit(&reverseCommTypes[nn]);
 
         /* Create the communication request for this send operation and
            update the counters nn and mm for the next request.  */
         int tag = ranksRecv[i] + nTimeLevels + level;
-        MPI_Send_init(revCommData, 1, reverseCommTypes[nn], ranksRecv[i],
-                      tag, MPI_COMM_WORLD, &reverseCommRequests[level][mm]);
+        SU2_MPI::Send_init(revCommData, 1, reverseCommTypes[nn], ranksRecv[i],
+                           tag, MPI_COMM_WORLD, &reverseCommRequests[level][mm]);
         ++nn;
         ++mm;
       }
@@ -2777,9 +2777,9 @@ void CFEM_DG_EulerSolver::Prepare_MPI_Communication(const CMeshFEM *FEMGeometry,
         /* Create the communication request for this receive operation and
            update the counters mm and kk for the next request. */
         int tag = rank + nTimeLevels + level;
-        MPI_Recv_init(reverseCommRecvBuf[level][kk].data(), sizeBuf, MPI_DOUBLE,
-                      ranksSend[i], tag, MPI_COMM_WORLD,
-                      &reverseCommRequests[level][mm]);
+        SU2_MPI::Recv_init(reverseCommRecvBuf[level][kk].data(), sizeBuf, MPI_DOUBLE,
+                           ranksSend[i], tag, MPI_COMM_WORLD,
+                           &reverseCommRequests[level][mm]);
         ++mm;
         ++kk;
       }
@@ -2850,7 +2850,7 @@ void CFEM_DG_EulerSolver::Initiate_MPI_Communication(const unsigned short timeLe
 
 #ifdef HAVE_MPI
   if( nCommRequests[timeLevel] )
-    MPI_Startall(nCommRequests[timeLevel], commRequests[timeLevel].data());
+    SU2_MPI::Startall(nCommRequests[timeLevel], commRequests[timeLevel].data());
 #endif
 }
 
@@ -2875,8 +2875,8 @@ bool CFEM_DG_EulerSolver::Complete_MPI_Communication(CConfig *config,
     }
     else {
       int flag;
-      MPI_Testall(nCommRequests[timeLevel], commRequests[timeLevel].data(),
-                  &flag, MPI_STATUSES_IGNORE);
+      SU2_MPI::Testall(nCommRequests[timeLevel], commRequests[timeLevel].data(),
+                       &flag, MPI_STATUSES_IGNORE);
       if( !flag ) return false;
     }
   }
@@ -3038,7 +3038,7 @@ void CFEM_DG_EulerSolver::Initiate_MPI_ReverseCommunication(CConfig *config,
 
 #ifdef HAVE_MPI
   if( nCommRequests[timeLevel] )
-    MPI_Startall(nCommRequests[timeLevel], reverseCommRequests[timeLevel].data());
+    SU2_MPI::Startall(nCommRequests[timeLevel], reverseCommRequests[timeLevel].data());
 #endif
 
 }
@@ -3065,8 +3065,8 @@ bool CFEM_DG_EulerSolver::Complete_MPI_ReverseCommunication(CConfig *config,
     }
     else {
       int flag;
-      MPI_Testall(nCommRequests[timeLevel], reverseCommRequests[timeLevel].data(),
-                  &flag, MPI_STATUSES_IGNORE);
+      SU2_MPI::Testall(nCommRequests[timeLevel], reverseCommRequests[timeLevel].data(),
+                       &flag, MPI_STATUSES_IGNORE);
       if( !flag ) return false;
     }
   }

@@ -100,7 +100,7 @@ public:
   CDriver(char* confFile,
           unsigned short val_nZone,
           unsigned short val_nDim,
-          SU2_Comm MPICommunicator);
+          SU2_MPI::Comm MPICommunicator);
 
   /*!
    * \brief Destructor of the class.
@@ -506,7 +506,7 @@ public:
   CGeneralDriver(char* confFile,
                  unsigned short val_nZone,
                  unsigned short val_nDim,
-                 SU2_Comm MPICommunicator);
+                 SU2_MPI::Comm MPICommunicator);
 
   /*!
    * \brief Destructor of the class.
@@ -564,7 +564,7 @@ public:
   CFluidDriver(char* confFile,
                unsigned short val_nZone,
                unsigned short val_nDim,
-               SU2_Comm MPICommunicator);
+               SU2_MPI::Comm MPICommunicator);
 
   /*!
    * \brief Destructor of the class.
@@ -626,7 +626,7 @@ public:
   CTurbomachineryDriver(char* confFile,
                         unsigned short val_nZone,
                         unsigned short val_nDim,
-                        SU2_Comm MPICommunicator);
+                        SU2_MPI::Comm MPICommunicator);
 
   /*!
    * \brief Destructor of the class.
@@ -683,7 +683,7 @@ public:
   CDiscAdjFluidDriver(char* confFile,
                    unsigned short val_nZone,
                    unsigned short val_nDim,
-                   SU2_Comm MPICommunicator);
+                   SU2_MPI::Comm MPICommunicator);
 
   /*!
    * \brief Destructor of the class.
@@ -737,7 +737,7 @@ public:
 	   */
   CDiscAdjTurbomachineryDriver(char* confFile,
                    unsigned short val_nZone,
-                   unsigned short val_nDim, SU2_Comm MPICommunicator);
+                   unsigned short val_nDim, SU2_MPI::Comm MPICommunicator);
 
   /*!
    * \brief Destructor of the class.
@@ -790,7 +790,7 @@ public:
   CHBDriver(char* confFile,
             unsigned short val_nZone,
             unsigned short val_nDim,
-            SU2_Comm MPICommunicator);
+            SU2_MPI::Comm MPICommunicator);
 
   /*!
    * \brief Destructor of the class.
@@ -845,7 +845,7 @@ public:
   CFSIDriver(char* confFile,
              unsigned short val_nZone,
              unsigned short val_nDim,
-             SU2_Comm MPICommunicator);
+             SU2_MPI::Comm MPICommunicator);
 
   /*!
    * \brief Destructor of the class.

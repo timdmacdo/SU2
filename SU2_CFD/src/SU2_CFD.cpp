@@ -56,9 +56,9 @@ int main(int argc, char *argv[]) {
   char *buffptr;
   SU2_MPI::Init(&argc, &argv);
   MPI_Buffer_attach( malloc(BUFSIZE), BUFSIZE );
-  SU2_Comm MPICommunicator(MPI_COMM_WORLD);
+  SU2_MPI::Comm MPICommunicator(MPI_COMM_WORLD);
 #else
-  SU2_Comm MPICommunicator(0);
+  SU2_MPI::Comm MPICommunicator(0);
 #endif
 
   /*--- Uncomment the following line if runtime NaN catching is desired. ---*/

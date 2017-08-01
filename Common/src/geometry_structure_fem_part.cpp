@@ -1335,7 +1335,7 @@ void CPhysicalGeometry::Read_CGNS_Format_Parallel_FEM(CConfig        *config,
 
   /*--- Send out the messages with the global node numbers. Use nonblocking
         sends to avoid deadlock. ---*/
-  vector<MPI_Request> sendReqs(nRankSend);
+  vector<SU2_MPI::Request> sendReqs(nRankSend);
   nRankSend = 0;
   for(int i=0; i<size; ++i) {
     if( nodeBuf[i].size() ) {
@@ -1347,7 +1347,7 @@ void CPhysicalGeometry::Read_CGNS_Format_Parallel_FEM(CConfig        *config,
 
   /* Define the communication buffer for the coordinates and the vector
      for the return communication requests. */
-  vector<MPI_Request> returnReqs(nRankRecv);
+  vector<SU2_MPI::Request> returnReqs(nRankRecv);
   vector<vector<su2double> > coorReturnBuf(nRankRecv, vector<su2double>(0));
 
   /*--- Loop over the number of ranks from which this rank receives global
@@ -2325,7 +2325,7 @@ void CPhysicalGeometry::SetColorFEMGrid_Parallel(CConfig *config) {
                      MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
 
   /*--- Send the data using nonblocking sends. ---*/
-  vector<MPI_Request> commReqs(max(nMessSend,nMessRecv));
+  vector<SU2_MPI::Request> commReqs(max(nMessSend,nMessRecv));
 
   nMessSend = 0;
   unsigned long indSend = 0;
@@ -3564,7 +3564,7 @@ void CPhysicalGeometry::DetermineTimeLevelElements(
     /*--- Loop over the ranks from which I receive data during the actual
           exchange and send over the global element ID's. In order to avoid
           unnecessary communication, multiple entries are filtered out. ---*/
-    vector<MPI_Request> sendReqs(nRankRecv);
+    vector<SU2_MPI::Request> sendReqs(nRankRecv);
     map<int,int>::const_iterator MRI = mapRankToIndRecv.begin();
 
     for(int i=0; i<nRankRecv; ++i, ++MRI) {

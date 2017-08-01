@@ -3852,13 +3852,13 @@ private:
 #ifdef HAVE_MPI
   int nCommRequests;                 /*!< \brief Number of communication requests in the persistent communication.
                                       These are both sending and receiving requests. */
-  vector<MPI_Request> commRequests;  /*!< \brief Communication requests in the persistent communication.
-                                      These are both sending and receiving requests. */
+  vector<SU2_MPI::Request> commRequests;  /*!< \brief Communication requests in the persistent communication.
+                                           These are both sending and receiving requests. */
   vector<MPI_Datatype> commTypes;    /*!< \brief MPI derived data types for communicating the solution
                                       variables of the DOFS. */
 
-  vector<MPI_Request> reverseCommRequests; /*!< \brief Communication requests in the persistent reverse communication.
-                                            These are both sending and receiving requests. */
+  vector<SU2_MPI::Request> reverseCommRequests; /*!< \brief Communication requests in the persistent reverse communication.
+                                                  These are both sending and receiving requests. */
   vector<MPI_Datatype> reverseCommTypes;   /*!< \brief MPI derived data types for communicating the residuals
                                             of the DOFs in the halo elements. */
 
@@ -12296,13 +12296,13 @@ private:
 #ifdef HAVE_MPI
   vector<int> nCommRequests;                 /*!< \brief Number of communication requests in the persistent communication
                                                          for all time levels. These are both sending and receiving requests. */
-  vector<vector<MPI_Request> > commRequests;  /*!< \brief Communication requests in the persistent communication for all
-                                                          time levels. These are both sending and receiving requests. */
+  vector<vector<SU2_MPI::Request> > commRequests;  /*!< \brief Communication requests in the persistent communication for all
+                                                               time levels. These are both sending and receiving requests. */
   vector<MPI_Datatype> commTypes;    /*!< \brief MPI derived data types for communicating the solution
                                                  variables of the DOFS. */
 
-  vector<vector<MPI_Request> > reverseCommRequests; /*!< \brief Communication requests in the persistent reverse communication
-                                                                for all time levels. These are both sending and receiving requests. */
+  vector<vector<SU2_MPI::Request> > reverseCommRequests; /*!< \brief Communication requests in the persistent reverse communication
+                                                                     for all time levels. These are both sending and receiving requests. */
   vector<MPI_Datatype> reverseCommTypes;   /*!< \brief MPI derived data types for communicating the residuals
                                                        of the DOFs in the halo elements. */
 

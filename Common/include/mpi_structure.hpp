@@ -43,23 +43,35 @@
 
 #ifdef HAVE_MPI
 
-typedef MPI_Comm SU2_Comm;
-
 /*--- Depending on the datatype used, the correct MPI wrapper class is defined.
  * For the default (double type) case this results in using the normal MPI routines. ---*/
+#if defined CODI_REVERSE_TYPE || defined CODI_FORWARD_TYPE
 
-#if defined COMPLEX_TYPE  || \
-    defined ADOLC_FORWARD_TYPE || \
-    defined CODI_FORWARD_TYPE
-class CAuxMPIWrapper;
-typedef CAuxMPIWrapper SU2_MPI;
-#elif defined CODI_REVERSE_TYPE
-class CAdjointMPIWrapper;
-typedef CAdjointMPIWrapper SU2_MPI;
+#include <medi/medi.hpp>
+using namespace medi;
+
+class CMediMPIWrapper;
+typedef CMediMPIWrapper SU2_MPI;
+
+#if defined CODI_REVERSE_TYPE
+#include <medi/codiMediPackTypes.hpp>
+#if CODI_PRIMAL_INDEX_TAPE
+typedef CoDiPackToolPrimalRestore<su2double> MediTool;
+#else
+typedef CoDiPackTool<su2double> MediTool;
+#endif // defined CODI_REVERSE_TYPE
+#elif defined CODI_FORWARD_TYPE
+#include <medi/codiForwardMediPackTypes.hpp>
+typedef CoDiPackForwardTool<su2double> MediTool;
+#endif // defined CODI_FORWARD_TYPE
+
+typedef medi::MpiTypeDefault<MediTool> AMPI_ADOUBLE_TYPE;
+extern AMPI_ADOUBLE_TYPE* AMPI_ADOUBLE;
+
 #else
 class CMPIWrapper;
 typedef CMPIWrapper SU2_MPI;
-#endif
+#endif // defined CODI_REVERSE_TYPE || defined CODI_FORWARD_TYPE
 
 /*!
  * \class CMPIWrapper
@@ -70,170 +82,34 @@ typedef CMPIWrapper SU2_MPI;
  */
 
 class CMPIWrapper {
+
 public:
-  static void Init(int *argc, char***argv);
 
-  static void Isend(void *buf, int count, MPI_Datatype datatype, int dest,
-                    int tag, MPI_Comm comm, MPI_Request* request);
+  typedef MPI_Comm Comm;
 
-  static void Irecv(void *buf, int count, MPI_Datatype datatype, int source,
-                    int tag, MPI_Comm comm, MPI_Request* request);
-
-  static void Wait(MPI_Request *request, MPI_Status *status);
-
-  static void Waitall(int nrequests, MPI_Request *request, MPI_Status *status);
-
-  static void Waitany(int nrequests, MPI_Request *request,
-                      int *index, MPI_Status *status);
-  
-  static void Send(void *buf, int count, MPI_Datatype datatype, int dest,
-                   int tag, MPI_Comm comm);
-
-  static void Recv(void *buf, int count, MPI_Datatype datatype, int dest,
-                   int tag, MPI_Comm comm, MPI_Status *status);
-
-  static void Bcast(void *buf, int count, MPI_Datatype datatype, int root,
-                    MPI_Comm comm);
-
-  static void Bsend(void *buf, int count, MPI_Datatype datatype, int dest,
-                    int tag, MPI_Comm comm);
-
-  static void Reduce(void *sendbuf, void *recvbuf, int count,
-                     MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm);
-
-  static void Allreduce(void *sendbuf, void *recvbuf, int count,
-                        MPI_Datatype datatype, MPI_Op op, MPI_Comm comm);
-
-  static void Gather(void *sendbuf, int sendcnt,MPI_Datatype sendtype,
-                     void *recvbuf, int recvcnt, MPI_Datatype recvtype, int root, MPI_Comm comm);
-
-  static void Scatter(void *sendbuf, int sendcnt,MPI_Datatype sendtype,
-                      void *recvbuf, int recvcnt, MPI_Datatype recvtype, int root, MPI_Comm comm);
-
-  static void Allgather(void *sendbuf, int sendcnt, MPI_Datatype sendtype,
-                        void *recvbuf, int recvcnt, MPI_Datatype recvtype, MPI_Comm comm);
-
-  static void Sendrecv(void *sendbuf, int sendcnt, MPI_Datatype sendtype,
-                       int dest, int sendtag, void *recvbuf, int recvcnt,
-                       MPI_Datatype recvtype,int source, int recvtag,
-                       MPI_Comm comm, MPI_Status *status);
-
-protected:
-  static char* buff;
-
-};
-/*!
- * \class CAuxMPIWrapper
- * \brief Class for defining the MPI wrapper routines for the simplest non-primitive data where a
- * auxiliary variable is attached to each primary value.
- * \author T. Albring
- * \version 5.0.0 "Raven"
- */
-#if defined COMPLEX_TYPE || \
-    defined ADOLC_FORWARD_TYPE || \
-    defined CODI_FORWARD_TYPE
-
-class CAuxMPIWrapper : public CMPIWrapper{
-public:
-  static void Isend(void *buf, int count, MPI_Datatype datatype, int dest,
-                    int tag, MPI_Comm comm, MPI_Request* request);
-
-  static void Irecv(void *buf, int count, MPI_Datatype datatype, int source,
-                    int tag, MPI_Comm comm, MPI_Request* request);
-
-  static void Wait(MPI_Request *request, MPI_Status *status);
-
-  static void Waitall(int nrequests, MPI_Request *request, MPI_Status *status);
-
-  static void Waitany(int nrequests, MPI_Request *request,
-                      int *index, MPI_Status *status);
-
-  static void Send(void *buf, int count, MPI_Datatype datatype, int dest,
-                   int tag, MPI_Comm comm);
-
-  static void Recv(void *buf, int count, MPI_Datatype datatype, int dest,
-                   int tag, MPI_Comm comm, MPI_Status *status);
-
-  static void Bcast(void *buf, int count, MPI_Datatype datatype, int root,
-                    MPI_Comm comm);
-
-  static void Bsend(void *buf, int count, MPI_Datatype datatype, int dest,
-                    int tag, MPI_Comm comm);
-
-  static void Reduce(void *sendbuf, void *recvbuf, int count,
-                     MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm);
-
-  static void Allreduce(void *sendbuf, void *recvbuf, int count,
-                        MPI_Datatype datatype, MPI_Op op, MPI_Comm comm);
-
-  static void Gather(void *sendbuf, int sendcnt,MPI_Datatype sendtype,
-                     void *recvbuf, int recvcnt, MPI_Datatype recvtype, int root, MPI_Comm comm);
-
-  static void Scatter(void *sendbuf, int sendcnt,MPI_Datatype sendtype,
-                      void *recvbuf, int recvcnt, MPI_Datatype recvtype, int root, MPI_Comm comm);
-
-  static void Allgather(void *sendbuf, int sendcnt, MPI_Datatype sendtype,
-                        void *recvbuf, int recvcnt, MPI_Datatype recvtype, MPI_Comm comm);
-
-  static void Sendrecv(void *sendbuf, int sendcnt, MPI_Datatype sendtype,
-                       int dest, int sendtag, void *recvbuf, int recvcnt,
-                       MPI_Datatype recvtype,int source, int recvtag,
-                       MPI_Comm comm, MPI_Status *status);
-
-private:
-
-  enum CommType {
-    ISEND,
-    IRECV
-  };
-
-  struct CommInfo{
-    CommType Type;
-    MPI_Request* RequestAux;
-    double* ValueBuffer;
-    double* AuxBuffer;
-    su2double* su2doubleBuffer;
-    int     count;
-  };
-
-  struct ValRank{
-    double value;
-    int rank;
-  };
-
-  static std::map<MPI_Request*, CommInfo>::iterator CommInfoIterator;
-
-  static std::map<MPI_Request*, CommInfo> CommInfoMap;
-
-  static void FinalizeCommunication(std::map<MPI_Request*, CommInfo>::iterator &CommInfo);
-
-};
+#if defined CODI_REVERSE_TYPE || defined CODI_FORWARD_TYPE
+  typedef AMPI_Request Request;
+#else
+  typedef MPI_Request Request;
 #endif
-#ifdef CODI_REVERSE_TYPE
-#include "ampi_tape.hpp"
 
-/*!
- * \class CAdjointMPIWrapper
- * \brief Adjoint MPI wrapper functions.
- * \author T. Albring
- * \version 5.0.0 "Raven"
- */
-
-class CAdjointMPIWrapper: public CMPIWrapper {
-public:
   static void Init(int *argc, char***argv);
 
+  static inline MPI_Request* convertRequest(Request* request);
+
+  static void Get_count(const MPI_Status *status, MPI_Datatype datatype, int *count);
+
   static void Isend(void *buf, int count, MPI_Datatype datatype, int dest,
-                    int tag, MPI_Comm comm, MPI_Request* request);
+                    int tag, MPI_Comm comm, Request* request);
 
   static void Irecv(void *buf, int count, MPI_Datatype datatype, int source,
-                    int tag, MPI_Comm comm, MPI_Request* request);
+                    int tag, MPI_Comm comm, Request* request);
 
-  static void Wait(MPI_Request *request, MPI_Status *status);
+  static void Wait(Request *request, MPI_Status *status);
 
-  static void Waitall(int nrequests, MPI_Request *request, MPI_Status *status);
+  static void Waitall(int nrequests, Request *request, MPI_Status *status);
 
-  static void Waitany(int nrequests, MPI_Request *request,
+  static void Waitany(int nrequests, Request *request,
                       int *index, MPI_Status *status);
 
   static void Send(void *buf, int count, MPI_Datatype datatype, int dest,
@@ -268,9 +144,114 @@ public:
                        MPI_Datatype recvtype,int source, int recvtag,
                        MPI_Comm comm, MPI_Status *status);
 
-protected:
-  static char* buff;
+  static void Request_free(Request* request);
 
+  static void Type_free(MPI_Datatype *datatype);
+
+  static void Type_indexed(int count, const int *array_of_blocklengths,
+                           const int *array_of_displacements,
+                           MPI_Datatype oldtype, MPI_Datatype *newtype);
+
+  static void Type_commit(MPI_Datatype *datatype);
+
+  static void Send_init(void *buf, int count, MPI_Datatype datatype,
+                        int dest, int tag, MPI_Comm comm, Request *request);
+
+  static void Recv_init(void *buf, int count, MPI_Datatype datatype,
+                        int source, int tag, MPI_Comm comm, Request *request);
+
+  static void Startall(int nrequests, Request *request);
+
+  static void Testall(int nrequests, Request *request, int *flag,
+                      MPI_Status *status);
+};
+
+#if defined CODI_REVERSE_TYPE || defined CODI_FORWARD_TYPE
+
+/*!
+ * \class CMediMPIWrapper
+ * \brief MPI wrapper functions for MediPack tool.
+ * \author T. Albring
+ * \version 5.0.0 "Raven"
+ */
+
+class CMediMPIWrapper: public CMPIWrapper {
+public:
+  static void Init(int *argc, char***argv);
+
+  static AMPI_Comm convertComm(MPI_Comm comm);
+
+  static AMPI_Status* convertStatus(MPI_Status* status);
+
+  static AMPI_Op convertOp(MPI_Op op);
+
+  static void Get_count(const MPI_Status *status, MPI_Datatype datatype, int *count);
+
+  static void Isend(void *buf, int count, MPI_Datatype datatype, int dest,
+                    int tag, MPI_Comm comm, Request* request);
+
+  static void Irecv(void *buf, int count, MPI_Datatype datatype, int source,
+                    int tag, MPI_Comm comm, Request* request);
+
+  static void Wait(SU2_MPI::Request *request, MPI_Status *status);
+
+  static void Waitall(int nrequests, Request *request, MPI_Status *status);
+
+  static void Waitany(int nrequests, SU2_MPI::Request *request,
+                      int *index, MPI_Status *status);
+
+  static void Send(void *buf, int count, MPI_Datatype datatype, int dest,
+                   int tag, MPI_Comm comm);
+
+  static void Recv(void *buf, int count, MPI_Datatype datatype, int dest,
+                   int tag, MPI_Comm comm, MPI_Status *status);
+
+  static void Bcast(void *buf, int count, MPI_Datatype datatype, int root,
+                    MPI_Comm comm);
+
+  static void Bsend(void *buf, int count, MPI_Datatype datatype, int dest,
+                    int tag, MPI_Comm comm);
+
+  static void Reduce(void *sendbuf, void *recvbuf, int count,
+                     MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm);
+
+  static void Allreduce(void *sendbuf, void *recvbuf, int count,
+                        MPI_Datatype datatype, MPI_Op op, MPI_Comm comm);
+
+  static void Gather(void *sendbuf, int sendcnt,MPI_Datatype sendtype,
+                     void *recvbuf, int recvcnt, MPI_Datatype recvtype, int root, MPI_Comm comm);
+
+  static void Scatter(void *sendbuf, int sendcnt,MPI_Datatype sendtype,
+                      void *recvbuf, int recvcnt, MPI_Datatype recvtype, int root, MPI_Comm comm);
+
+  static void Allgather(void *sendbuf, int sendcnt, MPI_Datatype sendtype,
+                        void *recvbuf, int recvcnt, MPI_Datatype recvtype, MPI_Comm comm);
+
+  static void Sendrecv(void *sendbuf, int sendcnt, MPI_Datatype sendtype,
+                       int dest, int sendtag, void *recvbuf, int recvcnt,
+                       MPI_Datatype recvtype,int source, int recvtag,
+                       MPI_Comm comm, MPI_Status *status);
+
+  static void Request_free(Request* request);
+
+  static void Type_free(MPI_Datatype *datatype);
+
+  static void Type_indexed(int count, const int *array_of_blocklengths,
+                           const int *array_of_displacements,
+                           MPI_Datatype oldtype, MPI_Datatype *newtype);
+
+  static void Type_commit(MPI_Datatype *datatype);
+
+  static void Send_init(void *buf, int count, MPI_Datatype datatype,
+                        int dest, int tag, MPI_Comm comm, Request *request);
+
+  static void Recv_init(void *buf, int count, MPI_Datatype datatype,
+                        int source, int tag, MPI_Comm comm, Request *request);
+
+  static void Startall(int nrequests, Request *request);
+
+  static void Testall(int nrequests, Request *request, int *flag,
+                      MPI_Status *status);
 };
 #endif
 
