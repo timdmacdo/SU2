@@ -741,28 +741,6 @@ CFEM_DG_EulerSolver::~CFEM_DG_EulerSolver(void) {
   if (CEff_Inv != NULL)         delete [] CEff_Inv;
 
   if (Cauchy_Serie != NULL) delete [] Cauchy_Serie;
-
-#ifdef HAVE_MPI
-
-  /*--- Release the memory of the persistent communication and the derived
-        data types. ---*/
-  for(unsigned long i=0; i<commRequests.size(); ++i) {
-    for(unsigned long j=0; j<commRequests[i].size(); ++j)
-      MPI_Request_free(&commRequests[i][j]);
-  }
-
-  for(unsigned long i=0; i<commTypes.size(); ++i)
-    MPI_Type_free(&commTypes[i]);
-
-  for(unsigned long i=0; i<reverseCommRequests.size(); ++i) {
-    for(unsigned long j=0; j<reverseCommRequests[i].size(); ++j)
-      MPI_Request_free(&reverseCommRequests[i][j]);
-  }
-
-  for(unsigned int i=0; i<reverseCommTypes.size(); ++i)
-     MPI_Type_free(&reverseCommTypes[i]);
-
-#endif
 }
 
 void CFEM_DG_EulerSolver::SetNondimensionalization(CConfig        *config,
@@ -1940,7 +1918,7 @@ void CFEM_DG_EulerSolver::SetUpTaskList(CConfig *config) {
       /* Initiate the communication of elements of level 0, if there is
          something to be communicated. */
 #ifdef HAVE_MPI
-      if( nCommRequests[0] ) {
+      if( commRequests[0].size() ) {
         if(elemEnd > elemBeg)   // Data needs to be computed before sending.
           prevInd[0] = indexInList[CTaskDefinition::ADER_PREDICTOR_STEP_COMM_ELEMENTS][0];
         else                    // Data only needs to be received.
@@ -1976,7 +1954,7 @@ void CFEM_DG_EulerSolver::SetUpTaskList(CConfig *config) {
         /* Initiate the communication of elements of level nL, if there is
            something to be communicated. */
 #ifdef HAVE_MPI
-        if( nCommRequests[nL] ) {
+        if( commRequests[nL].size() ) {
           if(elemEnd > elemBeg)   // Data needs to be computed before sending.
             prevInd[0] = indexInList[CTaskDefinition::ADER_PREDICTOR_STEP_COMM_ELEMENTS][nL];
           else                    // Data only needs to be received.
@@ -2008,7 +1986,7 @@ void CFEM_DG_EulerSolver::SetUpTaskList(CConfig *config) {
          level 0 can be completed. */
       prevInd[0] = prevInd[1] = prevInd[2] = -1;
 #ifdef HAVE_MPI
-      if( nCommRequests[0] )
+      if( commRequests[0].size() )
         prevInd[0] = indexInList[CTaskDefinition::INITIATE_MPI_COMMUNICATION][0];
 #endif
 
@@ -2050,7 +2028,7 @@ void CFEM_DG_EulerSolver::SetUpTaskList(CConfig *config) {
            level nL can be completed. */
         prevInd[0] = prevInd[1] = prevInd[2] = -1;
 #ifdef HAVE_MPI
-        if( nCommRequests[nL] )
+        if( commRequests[nL].size() )
           prevInd[0] = indexInList[CTaskDefinition::INITIATE_MPI_COMMUNICATION][nL];
 #endif
 
@@ -2248,7 +2226,7 @@ void CFEM_DG_EulerSolver::SetUpTaskList(CConfig *config) {
             bool commData = false;
 
 #ifdef HAVE_MPI
-            if( nCommRequests[level] ) commData = true;
+            if( commRequests[level].size() ) commData = true;
 #endif
             if(commData || elementsSendSelfComm[level].size()) {
 
@@ -2325,7 +2303,7 @@ void CFEM_DG_EulerSolver::SetUpTaskList(CConfig *config) {
             bool commData = false;
 
 #ifdef HAVE_MPI
-            if( nCommRequests[level] ) commData = true;
+            if( commRequests[level].size() ) commData = true;
 #endif
             if(commData || elementsSendSelfComm[level].size()) {
 
@@ -2478,8 +2456,17 @@ void CFEM_DG_EulerSolver::Prepare_MPI_Communication(const CMeshFEM *FEMGeometry,
   const vector<vector<unsigned long> > &elementsSend = FEMGeometry->GetEntitiesSend();
   const vector<vector<unsigned long> > &elementsRecv = FEMGeometry->GetEntitiesRecv();
 
+  /* Determine the number of time DOFs that must be communicated.
+     For non-ADER schemes this is simply set to 1. */
+  unsigned short nTimeDOFs = 1;
+  if(config->GetKind_TimeIntScheme_Flow() == ADER_DG)
+    nTimeDOFs = config->GetnTimeDOFsADER_DG();
+
+  /* Determine the number of items per DOF that must be communicated. */
+  const unsigned short nItemsPerDOF = nTimeDOFs*nVar;
+
   /*--------------------------------------------------------------------------*/
-  /*--- Step 1. Create the triple vector, which contain elements to be     ---*/
+  /*--- Step 1. Create the triple vector, which contains elements to be    ---*/
   /*---         sent and received per time level. Note that when time      ---*/
   /*---         accurate local time stepping is not used, this is just a   ---*/
   /*---         copy of elementsSend and elementsRecv.                     ---*/
@@ -2532,7 +2519,7 @@ void CFEM_DG_EulerSolver::Prepare_MPI_Communication(const CMeshFEM *FEMGeometry,
   elementsSendSelfComm.resize(nTimeLevels);
   elementsRecvSelfComm.resize(nTimeLevels);
 
-  /* Loop over the ranks to send data and copy the elements for self
+  /* Loop over the ranks to which data is sent and copy the elements for self
      communication for all time levels. */
   for(unsigned long i=0; i<ranksSend.size(); ++i) {
     if(ranksSend[i] == rank) {
@@ -2541,8 +2528,8 @@ void CFEM_DG_EulerSolver::Prepare_MPI_Communication(const CMeshFEM *FEMGeometry,
     }
   }
 
-  /* Loop over the ranks to receive data and copy the elements for self
-     communication for all time levels. */
+  /* Loop over the ranks from which data is received and copy the elements
+     for self communication for all time levels. */
   for(unsigned long i=0; i<ranksRecv.size(); ++i) {
     if(ranksRecv[i] == rank) {
       for(unsigned short j=0; j<nTimeLevels; ++j)
@@ -2553,235 +2540,92 @@ void CFEM_DG_EulerSolver::Prepare_MPI_Communication(const CMeshFEM *FEMGeometry,
 #ifdef HAVE_MPI
 
   /*--------------------------------------------------------------------------*/
-  /*--- Step 3. Set up the persistent MPI communication for the halo data  ---*/
-  /*---         for all time levels.                                       ---*/
+  /*--- Step 3. Determine the MPI communication patterns for               ---*/
+  /*---         all time levels.                                           ---*/
   /*--------------------------------------------------------------------------*/
 
-  /* Set the pointer to the memory, whose data must be communicated.
-     This depends on the time integration scheme used. For ADER the data of
-     the predictor part is communicated, while for the other time integration
-     schemes typically the working solution is communicated. Note that if the
-     working solution is communicated, there is only one time level. */
-  unsigned short nTimeDOFs;
-  su2double *commData, *revCommData;
-  if(config->GetKind_TimeIntScheme_Flow() == ADER_DG) {
-    nTimeDOFs   = config->GetnTimeDOFsADER_DG();
-    commData    = VecSolDOFsPredictorADER.data();
-    revCommData = VecTotResDOFsADER.data();
-  }
-  else {
-    nTimeDOFs   = 1;
-    commData    = VecWorkSolDOFs[0].data();
-    revCommData = VecResDOFs.data();
-  }
-
-  /*--- Determine the number of communication requests per time level that take
-        place or the exchange of the halo data. These requests are both send and
-        receive requests. Allocate the required memory. ---*/
-  nCommRequests.assign(nTimeLevels, 0);
-  for(unsigned long i=0; i<ranksSend.size(); ++i) {
-    if(ranksSend[i] != rank) {
-      for(unsigned short j=0; j<nTimeLevels; ++j) {
-        if( elemSendPerTimeLevel[j][i].size() ) ++nCommRequests[j];
-      }
-    }
-  }
-
-  for(unsigned long i=0; i<ranksRecv.size(); ++i) {
-    if(ranksRecv[i] != rank) {
-      for(unsigned short j=0; j<nTimeLevels; ++j) {
-        if( elemRecvPerTimeLevel[j][i].size() ) ++nCommRequests[j];
-      }
-    }
-  }
-
-  unsigned int nn = 0;
+  /* Allocate the memory for the first index of the vectors that
+     determine the MPI communication patterns. */
   commRequests.resize(nTimeLevels);
-  for(unsigned short i=0; i<nTimeLevels; ++i) {
-    commRequests[i].resize(nCommRequests[i]);
-    nn += nCommRequests[i];
-  }
+  elementsRecvMPIComm.resize(nTimeLevels);
+  elementsSendMPIComm.resize(nTimeLevels);
+  ranksRecvMPI.resize(nTimeLevels);
+  ranksSendMPI.resize(nTimeLevels);
+  commRecvBuf.resize(nTimeLevels);
+  commSendBuf.resize(nTimeLevels);
 
-  commTypes.resize(nn);
-
-  /* Loop over the time levels to set up the communication requests for
-     each time level. */
-  nn = 0;
+  /* Loop over the time levels. */
   for(unsigned short level=0; level<nTimeLevels; ++level) {
-    unsigned int mm = 0;
 
-    /* Loop over the ranks of ranksSend and check if something must be sent
-       to this rank. Self communication is excluded. */
-    for(unsigned long i=0; i<ranksSend.size(); ++i) {
-      if((ranksSend[i] != rank) && elemSendPerTimeLevel[level][i].size()) {
-
-        /*--- Elements must be sent to this rank for this time level. Determine
-              the derived data type for sending the data. ---*/
-        const unsigned long nElemSend = elemSendPerTimeLevel[level][i].size();
-        vector<int> blockLen(nElemSend*nTimeDOFs), displ(nElemSend*nTimeDOFs);
-
-        unsigned long kk = 0;
-        for(unsigned short k=0; k<nTimeDOFs; ++k) {
-          for(unsigned long j=0; j<nElemSend; ++j, ++kk) {
-            const unsigned long jj = elemSendPerTimeLevel[level][i][j];
-            blockLen[kk] = nVar*volElem[jj].nDOFsSol;
-            displ[kk]    = nVar*(volElem[jj].offsetDOFsSolLocal + k*nDOFsLocTot);
-          }
-        }
-
-        MPI_Type_indexed(nElemSend*nTimeDOFs, blockLen.data(), displ.data(),
-                         MPI_DOUBLE, &commTypes[nn]);
-        MPI_Type_commit(&commTypes[nn]);
-
-        /* Create the communication request for this send operation and
-           update the counters nn and mm for the next request.  */
-        int tag = ranksSend[i] + level;
-        MPI_Send_init(commData, 1, commTypes[nn], ranksSend[i],
-                      tag, MPI_COMM_WORLD, &commRequests[level][mm]);
-        ++nn;
-        ++mm;
-      }
+    /* Determine the number of ranks from which data will be received
+       for this time level. Self communication is excluded. */
+    int nRankRecv = 0;
+    for(unsigned long i=0; i<ranksRecv.size(); ++i) {
+      if((ranksRecv[i] != rank) && elemRecvPerTimeLevel[level][i].size()) ++nRankRecv;
     }
 
-    /* Loop over the ranks of ranksRecv and check if something must be received
-       from this rank. Self communication is excluded. */
+    /* Determine the number of ranks to which data will be send
+       for this time level. Self communication is excluded. */
+    int nRankSend = 0;
+    for(unsigned long i=0; i<ranksSend.size(); ++i) {
+      if((ranksSend[i] != rank) && elemSendPerTimeLevel[level][i].size()) ++nRankSend;
+    }
+
+    /* Allocate the memory for the second index of the vectors that
+       determine the MPI communication. */
+    commRequests[level].resize(nRankRecv+nRankSend);
+    elementsRecvMPIComm[level].resize(nRankRecv);
+    elementsSendMPIComm[level].resize(nRankSend);
+    ranksRecvMPI[level].resize(nRankRecv);
+    ranksSendMPI[level].resize(nRankSend);
+    commRecvBuf[level].resize(nRankRecv);
+    commSendBuf[level].resize(nRankSend);
+
+    /* Determine the receive information. */
+    nRankRecv = 0;
     for(unsigned long i=0; i<ranksRecv.size(); ++i) {
       if((ranksRecv[i] != rank) && elemRecvPerTimeLevel[level][i].size()) {
 
-        /*--- Elements must be received from this rank for this time level.
-              Determine the derived data type for receiving the data. ---*/
-        const unsigned long nElemRecv = elemRecvPerTimeLevel[level][i].size();
-        vector<int> blockLen(nElemRecv*nTimeDOFs), displ(nElemRecv*nTimeDOFs);
-
-        unsigned long kk = 0;
-        for(unsigned short k=0; k<nTimeDOFs; ++k) {
-          for(unsigned int j=0; j<nElemRecv; ++j, ++kk) {
-            const unsigned long jj = elemRecvPerTimeLevel[level][i][j];
-            blockLen[kk] = nVar*volElem[jj].nDOFsSol;
-            displ[kk]    = nVar*(volElem[jj].offsetDOFsSolLocal + k*nDOFsLocTot);
-          }
-        }
-
-        MPI_Type_indexed(nElemRecv*nTimeDOFs, blockLen.data(), displ.data(),
-                         MPI_DOUBLE, &commTypes[nn]);
-        MPI_Type_commit(&commTypes[nn]);
-
-        /* Create the communication request for this receive operation and
-           update the counters nn and mm for the next request.  */
-        int tag = rank + level;
-        MPI_Recv_init(commData, 1, commTypes[nn], ranksRecv[i],
-                      tag, MPI_COMM_WORLD, &commRequests[level][mm]);
-        ++nn;
-        ++mm;
-      }
-    }
-  }
-
-  /*--------------------------------------------------------------------------*/
-  /*--- Step 4. Set up the persistent reverse MPI communication for the    ---*/
-  /*---         residuals.                                                 ---*/
-  /*--------------------------------------------------------------------------*/
-
-  /* Determine the number of derived data types necessary in the reverse
-     communication. This is the number of ranks to which this rank has to send
-     halo residual data. This corresponds to the original receive pattern.
-     Exclude self communication. */
-  nn = 0;
-  for(unsigned short level=0; level<nTimeLevels; ++level) {
-    for(unsigned long i=0; i<ranksRecv.size(); ++i) {
-      if((ranksRecv[i] != rank) && elemRecvPerTimeLevel[level][i].size()) ++nn;
-    }
-  }
-
-  /* Allocate the memory for the reverse communication requests. The sending and
-     receiving are reversed, but the total number of requests is the same. Also
-     allocate the memory for the derived data types for the reverse communcation
-     which are only needed for the sending of the halo residual data. */
-  reverseCommRequests.resize(nTimeLevels);
-  for(unsigned short i=0; i<nTimeLevels; ++i)
-    reverseCommRequests[i].resize(nCommRequests[i]);
-
-  reverseCommTypes.resize(nn);
-
-  /* Allocate the first index of the receive buffers and the corresponding
-     indices of the elements. */
-  reverseElementsRecv.resize(nTimeLevels);
-  reverseCommRecvBuf.resize(nTimeLevels);
-
-  /* Loop over the time levels to set up the reverse communication requests for
-     each time level. */
-  nn = 0;
-  for(unsigned short level=0; level<nTimeLevels; ++level) {
-    unsigned int mm = 0;
-
-    /* Loop over the ranks of ranksRecv and check if something must be sent to
-       this rank in the reverse communication. Self communication is excluded. */
-    for(unsigned long i=0; i<ranksRecv.size(); ++i) {
-      if((ranksRecv[i] != rank) && elemRecvPerTimeLevel[level][i].size()) {
-
-        /*--- Determine the derived data type for sending the data. ---*/
-        const unsigned int nElemSend = elemRecvPerTimeLevel[level][i].size();
-
-        vector<int> blockLen(nElemSend), displ(nElemSend);
-
-        for(unsigned int j=0; j<nElemSend; ++j) {
-          const unsigned long jj = elemRecvPerTimeLevel[level][i][j];
-          blockLen[j] = nVar*volElem[jj].nDOFsSol;
-          displ[j]    = nVar*volElem[jj].offsetDOFsSolLocal;
-        }
-
-        MPI_Type_indexed(nElemSend, blockLen.data(), displ.data(),
-                         MPI_DOUBLE, &reverseCommTypes[nn]);
-        MPI_Type_commit(&reverseCommTypes[nn]);
-
-        /* Create the communication request for this send operation and
-           update the counters nn and mm for the next request.  */
-        int tag = ranksRecv[i] + nTimeLevels + level;
-        MPI_Send_init(revCommData, 1, reverseCommTypes[nn], ranksRecv[i],
-                      tag, MPI_COMM_WORLD, &reverseCommRequests[level][mm]);
-        ++nn;
-        ++mm;
-      }
-    }
-
-    /* Determine the number of ranks from which data is received for this
-       time level. Allocate the memory for the second index of the receive
-       buffers and the corresponding indices of the elements. */
-    unsigned int kk = 0;
-    for(unsigned long i=0; i<ranksSend.size(); ++i) {
-      if((ranksSend[i] != rank) && elemSendPerTimeLevel[level][i].size()) ++kk;
-    }
-
-    reverseElementsRecv[level].resize(kk);
-    reverseCommRecvBuf[level].resize(kk);
-
-    /* Loop over the ranks of ranksSend and check if something must received
-       from this rank in the reverse communication. Exclude self communication. */
-    kk = 0;
-    for(unsigned long i=0; i<ranksSend.size(); ++i) {
-      if((ranksSend[i] != rank) && elemSendPerTimeLevel[level][i].size()) {
-
-        /* Copy the data of elemSendPerTimeLevel into reverseElementsRecv. */
-        reverseElementsRecv[level][kk] = elemSendPerTimeLevel[level][i];
+        /* Copy the elements to be received and the rank from where they come. */
+        elementsRecvMPIComm[level][nRankRecv] = elemRecvPerTimeLevel[level][i];
+        ranksRecvMPI[level][nRankRecv] = ranksRecv[i];
 
         /* Determine the size of the receive buffer and allocate the memory. */
-        int sizeBuf = 0;
-        for(unsigned long j=0; j<reverseElementsRecv[level][kk].size(); ++j) {
-          const unsigned long jj = reverseElementsRecv[level][kk][j];
+        unsigned long sizeBuf = 0;
+        for(unsigned long j=0; j<elementsRecvMPIComm[level][nRankRecv].size(); ++j) {
+          const unsigned long jj = elementsRecvMPIComm[level][nRankRecv][j];
           sizeBuf += volElem[jj].nDOFsSol;
         }
 
-        sizeBuf *= nVar;
-        reverseCommRecvBuf[level][kk].resize(sizeBuf);
+        sizeBuf *= nItemsPerDOF;
+        commRecvBuf[level][nRankRecv].resize(sizeBuf);
 
-        /* Create the communication request for this receive operation and
-           update the counters mm and kk for the next request. */
-        int tag = rank + nTimeLevels + level;
-        MPI_Recv_init(reverseCommRecvBuf[level][kk].data(), sizeBuf, MPI_DOUBLE,
-                      ranksSend[i], tag, MPI_COMM_WORLD,
-                      &reverseCommRequests[level][mm]);
-        ++mm;
-        ++kk;
+        /* Update nRankRecv. */
+        ++nRankRecv;
+      }
+    }
+
+    /* Determine the send information. */
+    nRankSend = 0;
+    for(unsigned long i=0; i<ranksSend.size(); ++i) {
+      if((ranksSend[i] != rank) && elemSendPerTimeLevel[level][i].size()) {
+
+        /* Copy the elements to be sent and the rank to where they are sent. */
+        elementsSendMPIComm[level][nRankSend] = elemSendPerTimeLevel[level][i];
+        ranksSendMPI[level][nRankSend] = ranksSend[i];
+
+        /* Determine the size of the send buffer and allocate the memory. */
+        unsigned long sizeBuf = 0;
+        for(unsigned long j=0; j<elementsSendMPIComm[level][nRankSend].size(); ++j) {
+          const unsigned long jj = elementsSendMPIComm[level][nRankSend][j];
+          sizeBuf += volElem[jj].nDOFsSol;
+        }
+
+        sizeBuf *= nItemsPerDOF;
+        commSendBuf[level][nRankSend].resize(sizeBuf);
+
+        /* Update nRankSend. */
+        ++nRankSend;
       }
     }
   }
@@ -2789,7 +2633,7 @@ void CFEM_DG_EulerSolver::Prepare_MPI_Communication(const CMeshFEM *FEMGeometry,
 #endif
 
   /*--------------------------------------------------------------------------*/
-  /*--- Step 5. Store the information for the rotational periodic          ---*/
+  /*--- Step 4. Store the information for the rotational periodic          ---*/
   /*---         corrections for the halo elements.                         ---*/
   /*--------------------------------------------------------------------------*/
 
@@ -2844,47 +2688,79 @@ void CFEM_DG_EulerSolver::Prepare_MPI_Communication(const CMeshFEM *FEMGeometry,
   }
 }
 
-void CFEM_DG_EulerSolver::Initiate_MPI_Communication(const unsigned short timeLevel) {
-
-  /*--- Start the MPI communication, if needed. ---*/
-
+void CFEM_DG_EulerSolver::Initiate_MPI_Communication(CConfig *config,
+                                                     const unsigned short timeLevel) {
 #ifdef HAVE_MPI
-  if( nCommRequests[timeLevel] )
-    MPI_Startall(nCommRequests[timeLevel], commRequests[timeLevel].data());
+
+  /* Check if there is anything to communicate. */
+  if( commRequests[timeLevel].size() ) {
+
+    /* Determine my own rank. */
+    int rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+    /* Set the pointer to the memory, whose data must be communicated.
+       This depends on the time integration scheme used. For ADER the data of
+       the predictor part is communicated, while for the other time integration
+       schemes typically the working solution is communicated. Note that if the
+       working solution is communicated, there is only one time level. */
+    unsigned short nTimeDOFs;
+    su2double *commData;
+    if(config->GetKind_TimeIntScheme_Flow() == ADER_DG) {
+      nTimeDOFs = config->GetnTimeDOFsADER_DG();
+      commData  = VecSolDOFsPredictorADER.data();
+    }
+    else {
+      nTimeDOFs = 1;
+      commData  = VecWorkSolDOFs[0].data();
+    }
+
+    /* Loop over the number of ranks to which this rank must send data. */
+    int indComm = 0;
+    for(unsigned long i=0; i<ranksSendMPI[timeLevel].size(); ++i, ++indComm) {
+      unsigned long ii = 0;
+
+      /* Loop over the elements to be sent and copy the solution data
+         into the send buffer. */
+      su2double *sendBuf = commSendBuf[timeLevel][i].data();
+      for(unsigned long j=0; j<elementsSendMPIComm[timeLevel][i].size(); ++j) {
+        const unsigned long jj = elementsSendMPIComm[timeLevel][i][j];
+        const unsigned long nItems = volElem[jj].nDOFsSol * nVar;
+        const unsigned long nBytes = nItems * sizeof(su2double);
+
+        for(unsigned short k=0; k<nTimeDOFs; ++k) {
+          const unsigned long indS = nVar*(volElem[jj].offsetDOFsSolLocal + k*nDOFsLocTot);
+          memcpy(sendBuf+ii, commData+indS, nBytes);
+          ii += nItems;
+        }
+      }
+
+      /* Send the data using non-blocking sends. */
+      int dest = ranksSendMPI[timeLevel][i];
+      int tag  = dest + timeLevel;
+      SU2_MPI::Isend(sendBuf, ii, MPI_DOUBLE, dest, tag, MPI_COMM_WORLD,
+                     &commRequests[timeLevel][indComm]);
+    }
+
+    /* Loop over the number of ranks from which data is received. */
+    for(unsigned long i=0; i<ranksRecvMPI[timeLevel].size(); ++i, ++indComm) {
+
+      /* Post the non-blocking receive. */
+      int source = ranksRecvMPI[timeLevel][i];
+      int tag    = rank + timeLevel;
+      SU2_MPI::Irecv(commRecvBuf[timeLevel][i].data(),
+                     commRecvBuf[timeLevel][i].size(),
+                     MPI_DOUBLE, source, tag, MPI_COMM_WORLD,
+                     &commRequests[timeLevel][indComm]);
+    }
+  }
+
 #endif
 }
 
 bool CFEM_DG_EulerSolver::Complete_MPI_Communication(CConfig *config,
                                                      const unsigned short timeLevel,
                                                      const bool commMustBeCompleted) {
-
-  /*-----------------------------------------------------------------------*/
-  /*--- Complete the MPI communication, if needed and if possible.      ---*/
-  /*-----------------------------------------------------------------------*/
-
-#ifdef HAVE_MPI
-  if( nCommRequests[timeLevel] ) {
-
-    /*--- There are communication requests to be completed. Check if these
-          requests must be completed. In that case MPI_Waitall is used.
-          Otherwise, MPI_Testall is used to check if all the requests have
-          been completed. If not, false is returned. ---*/
-    if( commMustBeCompleted ) {
-      SU2_MPI::Waitall(nCommRequests[timeLevel], commRequests[timeLevel].data(),
-                       MPI_STATUSES_IGNORE);
-    }
-    else {
-      int flag;
-      MPI_Testall(nCommRequests[timeLevel], commRequests[timeLevel].data(),
-                  &flag, MPI_STATUSES_IGNORE);
-      if( !flag ) return false;
-    }
-  }
-#endif
-
-  /*-----------------------------------------------------------------------*/
-  /*---               Carry out the self communication.                 ---*/
-  /*-----------------------------------------------------------------------*/
 
   /* Set the pointer to the memory, whose data must be communicated.
      This depends on the time integration scheme used. For ADER the data of
@@ -2902,15 +2778,61 @@ bool CFEM_DG_EulerSolver::Complete_MPI_Communication(CConfig *config,
     commData  = VecWorkSolDOFs[0].data();
   }
 
-  /* Easier storage of the number of variables times the size of su2double. */
-  const unsigned long sizeEntity = nVar*sizeof(su2double);
+  /*-----------------------------------------------------------------------*/
+  /*--- Complete the MPI communication, if needed and if possible, and  ---*/
+  /*--- copy the data from the receive buffers into the correct         ---*/
+  /*--- location in commData.                                           ---*/
+  /*-----------------------------------------------------------------------*/
+
+#ifdef HAVE_MPI
+  if( commRequests[timeLevel].size() ) {
+
+    /*--- There are communication requests to be completed. Check if these
+          requests must be completed. In that case Waitall is used.
+          Otherwise, Testall is used to check if all the requests have
+          been completed. If not, false is returned. ---*/
+    if( commMustBeCompleted ) {
+      SU2_MPI::Waitall(commRequests[timeLevel].size(),
+                       commRequests[timeLevel].data(), MPI_STATUSES_IGNORE);
+    }
+    else {
+      int flag;
+      MPI_Testall(commRequests[timeLevel].size(),
+                  commRequests[timeLevel].data(), &flag, MPI_STATUSES_IGNORE);
+      if( !flag ) return false;
+    }
+
+    /* Loop over the number of ranks from which this rank has received data. */
+    for(unsigned long i=0; i<ranksRecvMPI[timeLevel].size(); ++i) {
+      unsigned long ii = 0;
+
+      /* Loop over the elements to be received and copy the solution data
+         into commData. */
+      su2double *recvBuf = commRecvBuf[timeLevel][i].data();
+      for(unsigned long j=0; j<elementsRecvMPIComm[timeLevel][i].size(); ++j) {
+        const unsigned long jj = elementsRecvMPIComm[timeLevel][i][j];
+        const unsigned long nItems = volElem[jj].nDOFsSol * nVar;
+        const unsigned long nBytes = nItems * sizeof(su2double);
+
+        for(unsigned short k=0; k<nTimeDOFs; ++k) {
+          const unsigned long indR = nVar*(volElem[jj].offsetDOFsSolLocal + k*nDOFsLocTot);
+          memcpy(commData+indR, recvBuf+ii, nBytes);
+          ii += nItems;
+        }
+      }
+    }
+  }
+#endif
+
+  /*-----------------------------------------------------------------------*/
+  /*---               Carry out the self communication.                 ---*/
+  /*-----------------------------------------------------------------------*/
 
   /* Loop over the number of elements involved and copy the data of the DOFs. */
-  const unsigned long nSelfElements = elementsSendSelfComm[timeLevel].size();
-  for(unsigned long i=0; i<nSelfElements; ++i) {
+  for(unsigned long i=0; i<elementsSendSelfComm[timeLevel].size(); ++i) {
     const unsigned long elemS  = elementsSendSelfComm[timeLevel][i];
     const unsigned long elemR  = elementsRecvSelfComm[timeLevel][i];
-    const unsigned long nBytes = volElem[elemS].nDOFsSol * sizeEntity;
+    const unsigned long nBytes = volElem[elemS].nDOFsSol * nVar*sizeof(su2double);
 
     for(unsigned short j=0; j<nTimeDOFs; ++j) {
       const unsigned long indS = nVar*(volElem[elemS].offsetDOFsSolLocal + j*nDOFsLocTot);
@@ -3034,11 +2956,54 @@ void CFEM_DG_EulerSolver::Initiate_MPI_ReverseCommunication(CConfig *config,
     }
   }
 
-  /*--- Start the MPI communication, if needed. ---*/
-
 #ifdef HAVE_MPI
-  if( nCommRequests[timeLevel] )
-    MPI_Startall(nCommRequests[timeLevel], reverseCommRequests[timeLevel].data());
+
+  /* Check if there is anything to communicate. */
+  if( commRequests[timeLevel].size() ) {
+
+    /* Determine my own rank. */
+    int rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+    /* Loop over the number of ranks from which this rank receives data in
+       the original communication pattern. In the reverse pattern, data
+       has to be sent. */
+    int indComm = 0;
+    for(unsigned long i=0; i<ranksRecvMPI[timeLevel].size(); ++i, ++indComm) {
+      unsigned long ii = 0;
+
+      /* Loop over the elements copy the residual data into recvBuf. */
+      su2double *recvBuf = commRecvBuf[timeLevel][i].data();
+      for(unsigned long j=0; j<elementsRecvMPIComm[timeLevel][i].size(); ++j) {
+        const unsigned long jj = elementsRecvMPIComm[timeLevel][i][j];
+        const unsigned long nItems = volElem[jj].nDOFsSol * nVar;
+        const unsigned long nBytes = nItems * sizeof(su2double);
+
+        const unsigned long indS = nVar*volElem[jj].offsetDOFsSolLocal;
+        memcpy(recvBuf+ii, resComm+indS, nBytes);
+        ii += nItems;
+      }
+
+      /* Send the data using non-blocking sends. */
+      int dest = ranksRecvMPI[timeLevel][i];
+      int tag  = dest + timeLevel + 20;
+      SU2_MPI::Isend(recvBuf, ii, MPI_DOUBLE, dest, tag, MPI_COMM_WORLD,
+                     &commRequests[timeLevel][indComm]);
+    }
+
+    /* Post the non-blocking receives. As this is the reverse communication,
+       a loop over the sending ranks must be carried out. */
+    for(unsigned long i=0; i<ranksSendMPI[timeLevel].size(); ++i, ++indComm) {
+
+      int source = ranksSendMPI[timeLevel][i];
+      int tag    = rank + timeLevel + 20;
+      SU2_MPI::Irecv(commSendBuf[timeLevel][i].data(),
+                     commSendBuf[timeLevel][i].size(),
+                     MPI_DOUBLE, source, tag, MPI_COMM_WORLD,
+                     &commRequests[timeLevel][indComm]);
+    }
+  }
+
 #endif
 
 }
@@ -3046,37 +3011,6 @@ void CFEM_DG_EulerSolver::Initiate_MPI_ReverseCommunication(CConfig *config,
 bool CFEM_DG_EulerSolver::Complete_MPI_ReverseCommunication(CConfig *config,
                                                             const unsigned short timeLevel,
                                                             const bool commMustBeCompleted) {
-#ifdef HAVE_MPI
-
-  /*-----------------------------------------------------------------------*/
-  /*---   Complete the MPI communication, if needed and if possible.    ---*/
-  /*-----------------------------------------------------------------------*/
-
-  /* Check if there are any requests to complete for this time level. */
-  if( nCommRequests[timeLevel] ) {
-
-    /*--- There are communication requests to be completed. Check if these
-          requests must be completed. In that case MPI_Waitall is used.
-          Otherwise, MPI_Testall is used to check if all the requests have
-          been completed. If not, return false. ---*/
-    if( commMustBeCompleted ) {
-      SU2_MPI::Waitall(nCommRequests[timeLevel], reverseCommRequests[timeLevel].data(),
-                       MPI_STATUSES_IGNORE);
-    }
-    else {
-      int flag;
-      MPI_Testall(nCommRequests[timeLevel], reverseCommRequests[timeLevel].data(),
-                  &flag, MPI_STATUSES_IGNORE);
-      if( !flag ) return false;
-    }
-  }
-
-#endif
-
-  /*---------------------------------------------------------------------------*/
-  /*---    Update the residuals of the owned DOFs with the data received.   ---*/
-  /*---------------------------------------------------------------------------*/
-
   /* Set the pointer to the residual to be communicated. */
   su2double *resComm;
   if(config->GetKind_TimeIntScheme_Flow() == ADER_DG) resComm = VecTotResDOFsADER.data();
@@ -3084,24 +3018,52 @@ bool CFEM_DG_EulerSolver::Complete_MPI_ReverseCommunication(CConfig *config,
 
 #ifdef HAVE_MPI
 
-  /*--- Loop over the received residual data from all ranks and update the
-        residual of the DOFs of the corresponding elements. ---*/
-  for(unsigned long i=0; i<reverseElementsRecv[timeLevel].size(); ++i) {
+  /*-----------------------------------------------------------------------*/
+  /*---   Complete the MPI communication, if needed and if possible.    ---*/
+  /*-----------------------------------------------------------------------*/
 
-    /* Loop over the elements that must be updated. */
-    unsigned long nn = 0;
-    for(unsigned long j=0; j<reverseElementsRecv[timeLevel][i].size(); ++j) {
-      const unsigned long jj = reverseElementsRecv[timeLevel][i][j];
+  /* Check if there are any requests to complete for this time level. */
+  if( commRequests[timeLevel].size() ) {
 
-      /* Easier storage of the starting residual of this element and the
-         data in the buffer and update the residuals of the DOFs. */
-      const unsigned short nRes = nVar*volElem[jj].nDOFsSol;
-      su2double            *res = resComm + nVar*volElem[jj].offsetDOFsSolLocal;
-      const su2double      *buf = reverseCommRecvBuf[timeLevel][i].data() + nn;
+    /*--- There are communication requests to be completed. Check if these
+          requests must be completed. In that case Waitall is used.
+          Otherwise, Testall is used to check if all the requests have
+          been completed. If not, return false. ---*/
+    if( commMustBeCompleted ) {
+      SU2_MPI::Waitall(commRequests[timeLevel].size(),
+                       commRequests[timeLevel].data(), MPI_STATUSES_IGNORE);
+    }
+    else {
+      int flag;
+      MPI_Testall(commRequests[timeLevel].size(),
+                  commRequests[timeLevel].data(), &flag, MPI_STATUSES_IGNORE);
+      if( !flag ) return false;
+    }
 
-      nn += nRes;
-      for(unsigned short k=0; k<nRes; ++k)
-        res[k] += buf[k];
+    /*-------------------------------------------------------------------------*/
+    /*---    Update the residuals of the owned DOFs with the data received. ---*/
+    /*-------------------------------------------------------------------------*/
+
+    /*--- Loop over the received residual data from all ranks and update the
+          residual of the DOFs of the corresponding elements. Note that in
+          reverse mode the send communication data must be used. ---*/
+    for(unsigned long i=0; i<ranksSendMPI[timeLevel].size(); ++i) {
+
+      /* Loop over the elements that must be updated. */
+      unsigned long nn = 0;
+      for(unsigned long j=0; j<elementsSendMPIComm[timeLevel][i].size(); ++j) {
+        const unsigned long jj = elementsSendMPIComm[timeLevel][i][j];
+
+        /* Easier storage of the starting residual of this element and the
+           data in the buffer and update the residuals of the DOFs. */
+        const unsigned short nRes = nVar*volElem[jj].nDOFsSol;
+        su2double            *res = resComm + nVar*volElem[jj].offsetDOFsSolLocal;
+        const su2double      *buf = commSendBuf[timeLevel][i].data() + nn;
+
+        nn += nRes;
+        for(unsigned short k=0; k<nRes; ++k)
+          res[k] += buf[k];
+      }
     }
   }
 
@@ -3113,8 +3075,7 @@ bool CFEM_DG_EulerSolver::Complete_MPI_ReverseCommunication(CConfig *config,
 
   /*--- Loop over the number of elements involved and update the residuals
         of the owned DOFs. ---*/
-  const unsigned long nSelfElements = elementsSendSelfComm[timeLevel].size();
-  for(unsigned long i=0; i<nSelfElements; ++i) {
+  for(unsigned long i=0; i<elementsSendSelfComm[timeLevel].size(); ++i) {
 
     const unsigned long volOwned = elementsSendSelfComm[timeLevel][i];
     const unsigned long volHalo  = elementsRecvSelfComm[timeLevel][i];
@@ -3869,7 +3830,7 @@ void CFEM_DG_EulerSolver::ProcessTaskList_DG(CGeometry *geometry,  CSolver **sol
             case CTaskDefinition::INITIATE_MPI_COMMUNICATION: {
 
               /* Start the MPI communication of the solution in the halo elements. */
-              Initiate_MPI_Communication(tasksList[i].timeLevel);
+              Initiate_MPI_Communication(config, tasksList[i].timeLevel);
               taskCarriedOut = taskCompleted[i] = true;
               break;
             }
@@ -6806,7 +6767,7 @@ void CFEM_DG_EulerSolver::BoundaryStates_Riemann(CConfig                  *confi
         const su2double vyL    = tmp*UL[2];
         const su2double alphaL = 0.5*(vxL*vxL + vyL*vyL);
         const su2double eL     = tmp*UL[3] - alphaL;
-        
+
         const su2double nx  = normals[0];
         const su2double ny  = normals[1];
         const su2double vnL = vxL*nx + vyL*ny;
@@ -10765,10 +10726,6 @@ void CFEM_DG_NSSolver::ResidualFaces(CConfig             *config,
                                      unsigned long       &indResFaces,
                                      CNumerics           *numerics) {
 
-  /* Determine whether or not the Cartesian gradients of the basis functions
-     are stored. */
-  const bool CartGradBasisFunctionsStored = config->GetStore_Cart_Grad_BasisFunctions_DGFEM();
-
   /*--- Set the pointers for the local arrays. ---*/
   double tick = 0.0;
   double tick2 = 0.0;
@@ -10776,7 +10733,7 @@ void CFEM_DG_NSSolver::ResidualFaces(CConfig             *config,
   unsigned int sizeFluxes = nIntegrationMax*nDim;
   sizeFluxes = nVar*max(sizeFluxes, (unsigned int) nDOFsMax);
 
-  const unsigned int sizeGradSolInt = nIntegrationMax*nDim*max(nVar,nDOFsMax);
+  const unsigned int sizeGradSolInt = nIntegrationMax*nDim*nVar;
 
   su2double *solIntL       = VecTmpMemory.data();
   su2double *solIntR       = solIntL       + nIntegrationMax*nVar;
@@ -10942,133 +10899,37 @@ void CFEM_DG_NSSolver::ResidualFaces(CConfig             *config,
     config->Tock(tick, "ER_1_4", 4);
 
     /*------------------------------------------------------------------------*/
-    /*--- Step 5: Compute the symmetrizing terms, if present, in the       ---*/
-    /*---         integration points of this matching face.                ---*/
+    /*--- Step 5: Compute and distribute the symmetrizing terms, if        ---*/
+    /*---         present. Note that these terms must be distributed to    ---*/
+    /*---         DOFs of the adjacent element, not only of the face.      ---*/
     /*------------------------------------------------------------------------*/
 
     if( symmetrizingTermsPresent ) {
 
       config->Tick(&tick);
-      /* Compute the symmetrizing fluxes in the nDim directions. */
+      /* Compute the symmetrizing fluxes in the nDim directions in the
+         integration points of the face. */
       SymmetrizingFluxesFace(nInt, solIntL, solIntR, viscosityIntL, viscosityIntR,
                              kOverCvIntL, kOverCvIntR,
                              matchingInternalFaces[l].metricNormalsFace.data(),
                              fluxes);
 
-      /*--- Multiply the fluxes just computed by their integration weights and
-            -theta/2. The parameter theta is the parameter in the Interior Penalty
-            formulation, the factor 1/2 comes in from the averaging and the minus
-            sign is from the convention that the viscous fluxes come with a minus
-            sign in this code. ---*/
+      /* Transform the fluxes, such that they must be multiplied with the
+         gradients w.r.t. the parametric coordinates rather than the
+         Cartesian coordinates of the basis functions. Also a multiplication
+         with the integration weight and the theta parameter is carried out.
+         Use gradSolInt as a buffer to store the parametric fluxes.
+         First side 0 of the face.  */
+      su2double *paramFluxes = gradSolInt;
       const su2double halfTheta = 0.5*config->GetTheta_Interior_Penalty_DGFEM();
 
-      for(unsigned short i=0; i<nInt; ++i) {
-        su2double *flux        = fluxes + i*nVar*nDim;
-        const su2double wTheta = -halfTheta*weights[i];
-
-        for(unsigned short j=0; j<(nVar*nDim); ++j)
-          flux[j] *= wTheta;
-      }
-      config->Tock(tick, "ER_1_5", 4);
-
-      /*------------------------------------------------------------------------*/
-      /*--- Step 6: Distribute the symmetrizing terms to the DOFs. Note that ---*/
-      /*---         these terms must be distributed to all the DOFs of the   ---*/
-      /*---         adjacent elements, not only to the DOFs of the face.     ---*/
-      /*------------------------------------------------------------------------*/
+      TransformSymmetrizingFluxes(nInt, halfTheta, fluxes, weights,
+                                  matchingInternalFaces[l].metricCoorDerivFace0.data(),
+                                  paramFluxes);
 
       /* Easier storage of the number of DOFs for the adjacent elements. */
       const unsigned short nDOFsElem0 = standardMatchingFacesSol[ind].GetNDOFsElemSide0();
       const unsigned short nDOFsElem1 = standardMatchingFacesSol[ind].GetNDOFsElemSide1();
-
-      config->Tick(&tick);
-
-      /* The Cartesian gradients of the element basis functions of side 0
-         are needed. Check if this data is stored. */
-      const su2double *cartGrad;
-      if( CartGradBasisFunctionsStored )
-        cartGrad = matchingInternalFaces[l].metricElemSide0.data();
-      else {
-
-        /* The gradients are not stored. Use the array gradSolInt to store
-           these derivatives. Get the derivatives w.r.t. the parametric
-           coordinates of the element on side 0 of the face. */
-        const su2double *derBasisElemTrans = standardMatchingFacesSol[ind].GetMatDerBasisElemIntegrationTransposeSide0();
-
-        /* Make a distinction between two and three space dimensions
-           in order to have the most efficient code. */
-        switch( nDim ) {
-
-          case 2: {
-
-            /*--- Two dimensional computation. Create the Cartesian derivatives
-                  of the basis functions of the DOFs of the element of side 0
-                  of the face in the integration points. ---*/
-            for(unsigned short j=0; j<nDOFsElem0; ++j) {
-              for(unsigned short i=0; i<nInt; ++i) {
-
-                /* Easier storage of the derivatives of the basis function w.r.t. the
-                   parametric coordinates, the location where to store the Cartesian
-                   derivatives of the basis functions, and the metric terms in this
-                   integration point. */
-                const unsigned int ii = 2*(j*nInt + i);   // The 2 is nDim.
-
-                const su2double *derParam    = derBasisElemTrans + ii;
-                const su2double *metricTerms = matchingInternalFaces[l].metricCoorDerivFace0.data()
-                                             + 4*i;               // The 4 is nDim*nDim;
-                      su2double *derCar      = gradSolInt + ii;
-
-                /*--- Compute the Cartesian derivatives of this basis function
-                      in this integration point. ---*/
-                derCar[0] = derParam[0]*metricTerms[0] + derParam[1]*metricTerms[2];
-                derCar[1] = derParam[0]*metricTerms[1] + derParam[1]*metricTerms[3];
-              }
-            }
-
-            break;
-          }
-
-          /*------------------------------------------------------------------*/
-
-          case 3: {
-
-            /*--- Three dimensional computation. Create the Cartesian derivatives
-                  of the basis functions of the DOFs of the element of side 0
-                  of the face in the integration points. ---*/
-            for(unsigned short j=0; j<nDOFsElem0; ++j) {
-              for(unsigned short i=0; i<nInt; ++i) {
-
-                /* Easier storage of the derivatives of the basis function w.r.t. the
-                   parametric coordinates, the location where to store the Cartesian
-                   derivatives of the basis functions, and the metric terms in this
-                   integration point. */
-                const unsigned int ii = 3*(j*nInt + i);   // The 3 is nDim.
-
-                const su2double *derParam    = derBasisElemTrans + ii;
-                const su2double *metricTerms = matchingInternalFaces[l].metricCoorDerivFace0.data()
-                                             + 9*i;               // The 9 is nDim*nDim;
-                      su2double *derCar      = gradSolInt + ii;
-
-                /*--- Compute the Cartesian derivatives of this basis function
-                      in this integration point. ---*/
-                derCar[0] = derParam[0]*metricTerms[0] + derParam[1]*metricTerms[3]
-                          + derParam[2]*metricTerms[6];
-                derCar[1] = derParam[0]*metricTerms[1] + derParam[1]*metricTerms[4]
-                          + derParam[2]*metricTerms[7];
-                derCar[2] = derParam[0]*metricTerms[2] + derParam[1]*metricTerms[5]
-                          + derParam[2]*metricTerms[8];
-              }
-            }
-
-            break;
-          }
-        }
-
-
-        /* Set the pointer of gradSolInt to cartGrad, such that the latter can
-           be used in the call to the matrix multiplication. */
-        cartGrad = gradSolInt;
-      }
 
       /* Set the pointer where to store the current residual and update the
          counter indResFaces. */
@@ -11077,93 +10938,20 @@ void CFEM_DG_NSSolver::ResidualFaces(CConfig             *config,
 
       /* Call the general function to carry out the matrix product to compute
          the residual for side 0. */
+      const su2double *derBasisElemTrans = standardMatchingFacesSol[ind].GetMatDerBasisElemIntegrationTransposeSide0();
       config->GEMM_Tick(&tick2);
-      DenseMatrixProduct(nDOFsElem0, nVar, nInt*nDim, cartGrad, fluxes, resElem0);
+      DenseMatrixProduct(nDOFsElem0, nVar, nInt*nDim, derBasisElemTrans, paramFluxes, resElem0);
       config->GEMM_Tock(tick2, "ResidualFaces3", nDOFsElem0, nVar, nInt*nDim);
 
-      /* The Cartesian gradients of the element basis functions of side 1
-         are needed. Check if this data is stored. */
-      if( CartGradBasisFunctionsStored )
-        cartGrad = matchingInternalFaces[l].metricElemSide1.data();
-      else {
-
-        /* The Cartesian gradients must be computed. Get the derivatives w.r.t.
-           the parametric coordinates of the element on side 1 of the face. */
-        const su2double *derBasisElemTrans = standardMatchingFacesSol[ind].GetMatDerBasisElemIntegrationTransposeSide1();
-
-        /* Make a distinction between two and three space dimensions
-           in order to have the most efficient code. */
-        switch( nDim ) {
-
-          case 2: {
-
-            /*--- Two dimensional computation. Create the Cartesian derivatives
-                  of the basis functions of the DOFs of the element of side 1
-                  of the face in the integration points. ---*/
-            for(unsigned short j=0; j<nDOFsElem1; ++j) {
-              for(unsigned short i=0; i<nInt; ++i) {
-
-                /* Easier storage of the derivatives of the basis function w.r.t. the
-                   parametric coordinates, the location where to store the Cartesian
-                   derivatives of the basis functions, and the metric terms in this
-                   integration point. */
-                const unsigned int ii = 2*(j*nInt + i);   // The 2 is nDim.
-
-                const su2double *derParam    = derBasisElemTrans + ii;
-                const su2double *metricTerms = matchingInternalFaces[l].metricCoorDerivFace1.data()
-                                             + 4*i;               // The 4 is nDim*nDim;
-                      su2double *derCar      = gradSolInt + ii;
-
-                /*--- Compute the Cartesian derivatives of this basis function
-                      in this integration point. ---*/
-                derCar[0] = derParam[0]*metricTerms[0] + derParam[1]*metricTerms[2];
-                derCar[1] = derParam[0]*metricTerms[1] + derParam[1]*metricTerms[3];
-              }
-            }
-
-            break;
-          }
-
-          /*------------------------------------------------------------------*/
-
-          case 3: {
-
-            /*--- Three dimensional computation. Create the Cartesian derivatives
-                  of the basis functions of the DOFs of the element of side 1
-                  of the face in the integration points. ---*/
-            for(unsigned short j=0; j<nDOFsElem1; ++j) {
-              for(unsigned short i=0; i<nInt; ++i) {
-
-                /* Easier storage of the derivatives of the basis function w.r.t. the
-                   parametric coordinates, the location where to store the Cartesian
-                   derivatives of the basis functions, and the metric terms in this
-                   integration point. */
-                const unsigned int ii = 3*(j*nInt + i);   // The 3 is nDim.
-
-                const su2double *derParam    = derBasisElemTrans + ii;
-                const su2double *metricTerms = matchingInternalFaces[l].metricCoorDerivFace1.data()
-                                             + 9*i;               // The 9 is nDim*nDim;
-                      su2double *derCar      = gradSolInt + ii;
-
-                /*--- Compute the Cartesian derivatives of this basis function
-                      in this integration point. ---*/
-                derCar[0] = derParam[0]*metricTerms[0] + derParam[1]*metricTerms[3]
-                          + derParam[2]*metricTerms[6];
-                derCar[1] = derParam[0]*metricTerms[1] + derParam[1]*metricTerms[4]
-                          + derParam[2]*metricTerms[7];
-                derCar[2] = derParam[0]*metricTerms[2] + derParam[1]*metricTerms[5]
-                          + derParam[2]*metricTerms[8];
-              }
-            }
-
-            break;
-          }
-        }
-
-        /* Set the pointer of gradSolInt to cartGrad, such that the latter can
-           be used in the call to the matrix multiplication. */
-        cartGrad = gradSolInt;
-      }
+      /* Transform the fluxes, such that they must be multiplied with the
+         gradients w.r.t. the parametric coordinates rather than the
+         Cartesian coordinates of the basis functions. Also a multiplication
+         with the integration weight and the theta parameter is carried out.
+         Use gradSolInt as a buffer to store the parametric fluxes.
+         Now side 1 of the face.  */
+      TransformSymmetrizingFluxes(nInt, halfTheta, fluxes, weights,
+                                  matchingInternalFaces[l].metricCoorDerivFace1.data(),
+                                  paramFluxes);
 
       /* Set the pointer where to store the current residual and update the
          counter indResFaces. */
@@ -11174,11 +10962,12 @@ void CFEM_DG_NSSolver::ResidualFaces(CConfig             *config,
          the residual for side 1. Note that the symmetrizing residual should not
          be negated, because two minus signs enter the formulation for side 1,
          which cancel each other. */
+      derBasisElemTrans = standardMatchingFacesSol[ind].GetMatDerBasisElemIntegrationTransposeSide1();
       config->GEMM_Tick(&tick2);
-      DenseMatrixProduct(nDOFsElem1, nVar, nInt*nDim, cartGrad, fluxes, resElem1);
+      DenseMatrixProduct(nDOFsElem1, nVar, nInt*nDim, derBasisElemTrans, paramFluxes, resElem1);
       config->GEMM_Tock(tick2, "ResidualFaces4", nDOFsElem1, nVar, nInt*nDim);
     }
-    config->Tock(tick, "ER_1_6", 4);
+    config->Tock(tick, "ER_1_5", 4);
   }
 }
 
@@ -11853,6 +11642,115 @@ void CFEM_DG_NSSolver::SymmetrizingFluxesFace(const unsigned short nInt,
     }
   }
 }
+
+void CFEM_DG_NSSolver::TransformSymmetrizingFluxes(const unsigned short nInt,
+                                                   const su2double      halfTheta,
+                                                   const su2double      *symmFluxes,
+                                                   const su2double      *weights,
+                                                   const su2double      *metricCoorFace,
+                                                         su2double      *paramFluxes) {
+
+  /*--- Transform the fluxes, such that they must be multiplied with the
+        gradients w.r.t. the parametric coordinates rather than the
+        Cartesian coordinates of the basis functions. This involves the
+        multiplication with the metric terms. Also multiply the fluxes with
+        their integration weights and -theta/2. The parameter theta is the
+        parameter in the Interior Penalty formulation, the factor 1/2 comes in
+        from the averaging and the minus sign is from the convention that the
+        viscous fluxes come with a minus sign in this code. ---*/
+
+  /* Make a distinction between two and three space dimensions
+     in order to have the most efficient code. */
+  switch( nDim ) {
+
+    case 2: {
+      /* Two-dimensional computation. Loop over the integration
+         points to correct the fluxes. */
+      for(unsigned short i=0; i<nInt; ++i) {
+
+        /* Easier storage of the location where the the fluxes
+           are stored for this integration point as well as an
+           abbreviation for the integration weights time halfTheta. */
+        const su2double *flux  =  symmFluxes + i*nVar*nDim;
+        const su2double wTheta = -halfTheta*weights[i];
+        su2double *paramFlux   =  paramFluxes + i*nVar*nDim;
+
+        /* Compute the modified metric terms. */
+        const su2double *metricTerms = metricCoorFace + 4*i;   // The 4 is nDim*nDim;
+        const su2double drdx = wTheta*metricTerms[0];
+        const su2double drdy = wTheta*metricTerms[1];
+        const su2double dsdx = wTheta*metricTerms[2];
+        const su2double dsdy = wTheta*metricTerms[3];
+
+        /* Parametric fluxes in r-direction. */
+        paramFlux[0] = flux[0]*drdx + flux[4]*drdy;
+        paramFlux[1] = flux[1]*drdx + flux[5]*drdy;
+        paramFlux[2] = flux[2]*drdx + flux[6]*drdy;
+        paramFlux[3] = flux[3]*drdx + flux[7]*drdy;
+            
+        /* Parametric fluxes in s-direction. */
+        paramFlux[4] = flux[0]*dsdx + flux[4]*dsdy;
+        paramFlux[5] = flux[1]*dsdx + flux[5]*dsdy;
+        paramFlux[6] = flux[2]*dsdx + flux[6]*dsdy;
+        paramFlux[7] = flux[3]*dsdx + flux[7]*dsdy;
+      }
+
+      break;
+    }
+
+    case 3: {
+      /* Three-dimensional computation. Loop over the integration
+         points to correct the fluxes. */
+      for(unsigned short i=0; i<nInt; ++i) {
+
+        /* Easier storage of the location where the the fluxes
+           are stored for this integration point as well as an
+           abbreviation for the integration weights time halfTheta. */
+        const su2double *flux  =  symmFluxes + i*nVar*nDim;
+        const su2double wTheta = -halfTheta*weights[i];
+        su2double *paramFlux   =  paramFluxes + i*nVar*nDim;
+
+        /* Compute the modified metric terms. */
+        const su2double *metricTerms = metricCoorFace + 9*i;   // The 9 is nDim*nDim;
+        const su2double drdx = wTheta*metricTerms[0];
+        const su2double drdy = wTheta*metricTerms[1];
+        const su2double drdz = wTheta*metricTerms[2];
+
+        const su2double dsdx = wTheta*metricTerms[3];
+        const su2double dsdy = wTheta*metricTerms[4];
+        const su2double dsdz = wTheta*metricTerms[5];
+
+        const su2double dtdx = wTheta*metricTerms[6];
+        const su2double dtdy = wTheta*metricTerms[7];
+        const su2double dtdz = wTheta*metricTerms[8];
+
+        /* Parametric fluxes in r-direction. */
+        paramFlux[0] = flux[0]*drdx + flux[5]*drdy + flux[10]*drdz;
+        paramFlux[1] = flux[1]*drdx + flux[6]*drdy + flux[11]*drdz;
+        paramFlux[2] = flux[2]*drdx + flux[7]*drdy + flux[12]*drdz;
+        paramFlux[3] = flux[3]*drdx + flux[8]*drdy + flux[13]*drdz;
+        paramFlux[4] = flux[4]*drdx + flux[9]*drdy + flux[14]*drdz;
+
+        /* Parametric fluxes in s-direction. */
+        paramFlux[5] = flux[0]*dsdx + flux[5]*dsdy + flux[10]*dsdz;
+        paramFlux[6] = flux[1]*dsdx + flux[6]*dsdy + flux[11]*dsdz;
+        paramFlux[7] = flux[2]*dsdx + flux[7]*dsdy + flux[12]*dsdz;
+        paramFlux[8] = flux[3]*dsdx + flux[8]*dsdy + flux[13]*dsdz;
+        paramFlux[9] = flux[4]*dsdx + flux[9]*dsdy + flux[14]*dsdz;
+
+        /* Parametric fluxes in t-direction. */
+        paramFlux[10] = flux[0]*dtdx + flux[5]*dtdy + flux[10]*dtdz;
+        paramFlux[11] = flux[1]*dtdx + flux[6]*dtdy + flux[11]*dtdz;
+        paramFlux[12] = flux[2]*dtdx + flux[7]*dtdy + flux[12]*dtdz;
+        paramFlux[13] = flux[3]*dtdx + flux[8]*dtdy + flux[13]*dtdz;
+        paramFlux[14] = flux[4]*dtdx + flux[9]*dtdy + flux[14]*dtdz;
+      }
+
+      break;
+    }
+  }
+}
+
 
 void CFEM_DG_NSSolver::BC_Euler_Wall(CConfig                  *config,
                                      const unsigned long      surfElemBeg,
@@ -12867,10 +12765,6 @@ void CFEM_DG_NSSolver::ResidualViscousBoundaryFace(
 
   double tick = 0.0;
 
-  /* Determine whether or not the Cartesian gradients of the basis functions
-     are stored. */
-  const bool CartGradBasisFunctionsStored = config->GetStore_Cart_Grad_BasisFunctions_DGFEM();
-
   /*--- Get the required information from the standard element. ---*/
   const unsigned short ind          = surfElem->indStandardElement;
   const unsigned short nInt         = standardBoundaryFacesSol[ind].GetNIntegration();
@@ -12929,8 +12823,9 @@ void CFEM_DG_NSSolver::ResidualViscousBoundaryFace(
   config->GEMM_Tock(tick, "ResidualViscousBoundaryFace1", nDOFs, nVar, nInt);
 
   /*------------------------------------------------------------------------*/
-  /*--- Step 3: Compute the symmetrizing terms, if present, in the       ---*/
-  /*---         integration points of this boundary face.                ---*/
+  /*--- Step 3: Compute and distribute the symmetrizing terms, if        ---*/
+  /*---         present. Note that these terms must be distributed to    ---*/
+  /*---         DOFs of the adjacent element, not only of the face.      ---*/
   /*------------------------------------------------------------------------*/
 
   if( symmetrizingTermsPresent ) {
@@ -12940,77 +12835,29 @@ void CFEM_DG_NSSolver::ResidualViscousBoundaryFace(
                            viscosityInt, kOverCvInt, kOverCvInt,
                            surfElem->metricNormalsFace.data(), fluxes);
 
-    /*--- Multiply the fluxes just computed by their integration weights and
-          -theta/2. The parameter theta is the parameter in the Interior Penalty
-          formulation, the factor 1/2 comes in from the averaging and the minus
-          sign is from the convention that the viscous fluxes comes with a minus
-          sign in this code. ---*/
+    /* Transform the fluxes, such that they must be multiplied with the
+       gradients w.r.t. the parametric coordinates rather than the
+       Cartesian coordinates of the basis functions. Also a multiplication
+       with the integration weight and the theta parameter is carried out.
+       Use gradSolInt as a buffer to store the parametric fluxes. */
+    su2double *paramFluxes = gradSolInt;
     const su2double halfTheta = 0.5*config->GetTheta_Interior_Penalty_DGFEM();
 
-    for(unsigned short i=0; i<nInt; ++i) {
-      su2double *flux        = fluxes + i*nVar*nDim;
-      const su2double wTheta = -halfTheta*weights[i];
-
-      for(unsigned short j=0; j<(nVar*nDim); ++j)
-        flux[j] *= wTheta;
-    }
-
-    /*------------------------------------------------------------------------*/
-    /*--- Step 4: Distribute the symmetrizing terms to the DOFs. Note that ---*/
-    /*---         these terms must be distributed to all the DOFs of the   ---*/
-    /*---         adjacent element, not only to the DOFs of the face.      ---*/
-    /*------------------------------------------------------------------------*/
+    TransformSymmetrizingFluxes(nInt, halfTheta, fluxes, weights,
+                                surfElem->metricCoorDerivFace.data(), 
+                                paramFluxes);
 
     /* Easier storage of the position in the residual array for this face
        and update the corresponding counter. */
     su2double *resElem = resFaces + indResFaces*nVar;
     indResFaces       += nDOFsElem;
 
-    /* The Cartesian gradients of the basis functions of the adjacent element
-         are needed. Check if this data is stored. */
-    const su2double *cartGrad;
-    if( CartGradBasisFunctionsStored )
-      cartGrad = surfElem->metricElem.data();
-    else {
-
-      /* Get the derivatives of the basis functions w.r.t. the parametric
-         coordinates of the element. */
-      const su2double *derBasisElemTrans = standardBoundaryFacesSol[ind].GetMatDerBasisElemIntegrationTranspose();
-
-      /*--- Create the Cartesian derivatives of the basis functions in the
-            integration points. Use gradSolInt for storage. ---*/
-      unsigned int ii = 0;
-      for(unsigned short j=0; j<nDOFsElem; ++j) {
-        for(unsigned short i=0; i<nInt; ++i, ii+=nDim) {
-
-          /* Easier storage of the derivatives of the basis function w.r.t. the
-             parametric coordinates, the location where to store the Cartesian
-             derivatives of the basis functions, and the metric terms in this
-             integration point. */
-          const su2double *derParam    = derBasisElemTrans + ii;
-          const su2double *metricTerms = surfElem->metricCoorDerivFace.data()
-                                       + i*nDim*nDim;
-                su2double *derCar      = gradSolInt + ii;
-
-          /*--- Loop over the dimensions to compute the Cartesian derivatives
-                of the basis functions. ---*/
-          for(unsigned short k=0; k<nDim; ++k) {
-            derCar[k] = 0.0;
-            for(unsigned short l=0; l<nDim; ++l)
-              derCar[k] += derParam[l]*metricTerms[k+l*nDim];
-          }
-        }
-      }
-
-      /* Set the pointer of gradSolInt to cartGrad, such that the latter can
-           be used in the call to the matrix multiplication. */
-        cartGrad = gradSolInt;
-    }
-
     /* Call the general function to carry out the matrix product to compute
        the residual. */
+    const su2double *derBasisElemTrans = standardBoundaryFacesSol[ind].GetMatDerBasisElemIntegrationTranspose();
+
     config->GEMM_Tick(&tick);
-    DenseMatrixProduct(nDOFsElem, nVar, nInt*nDim, cartGrad, fluxes, resElem);
+    DenseMatrixProduct(nDOFsElem, nVar, nInt*nDim, derBasisElemTrans, paramFluxes, resElem);
     config->GEMM_Tock(tick, "ResidualViscousBoundaryFace2", nDOFsElem, nVar, nInt*nDim);
   }
 }
