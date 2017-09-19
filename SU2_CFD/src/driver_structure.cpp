@@ -41,13 +41,12 @@
 CDriver::CDriver(char* confFile,
                  unsigned short val_nZone,
                  unsigned short val_nDim,
-                 SU2_Comm MPICommunicator):config_file_name(confFile), StartTime(0.0), StopTime(0.0), UsedTime(0.0), ExtIter(0), nZone(val_nZone), nDim(val_nDim), StopCalc(false), fsi(false) {
+                 SU2_Comm MPICommunicator):config_file_name(confFile), StartTime(0.0), StopTime(0.0), UsedTime(0.0), ExtIter(0), nZone(val_nZone), nDim(val_nDim), StopCalc(false), fsi(false), fem_solver(false) {
 
 
   unsigned short jZone, iSol;
   unsigned short Kind_Grid_Movement;
   bool initStaticMovement;
-  bool fem_solver = false;
   double tick = 0.0;
 
   int rank = MASTER_NODE;
@@ -375,8 +374,8 @@ CDriver::CDriver(char* confFile,
 
   for (iZone = 0; iZone < nZone; iZone++) {
 
-    if (config_container[iZone]->GetGrid_Movement() ||
-        (config_container[iZone]->GetDirectDiff() == D_DESIGN)) {
+    if (!fem_solver && (config_container[iZone]->GetGrid_Movement() ||
+                        (config_container[iZone]->GetDirectDiff() == D_DESIGN))) {
       if (rank == MASTER_NODE)
         cout << "Setting dynamic mesh structure for zone "<< iZone<<"." << endl;
       grid_movement[iZone] = new CVolumetricMovement(geometry_container[iZone][MESH_0], config_container[iZone]);
@@ -2612,18 +2611,18 @@ void CDriver::Iteration_Preprocessing() {
 
     case EULER: case NAVIER_STOKES: case RANS:
 
-    if(config_container[iZone]->GetBoolTurbomachinery()){
-      if (rank == MASTER_NODE)
-        cout << ": Euler/Navier-Stokes/RANS turbomachinery fluid iteration." << endl;
+      if(config_container[iZone]->GetBoolTurbomachinery()){
+        if (rank == MASTER_NODE)
+          cout << ": Euler/Navier-Stokes/RANS turbomachinery fluid iteration." << endl;
       iteration_container[iZone] = new CTurboIteration(config_container[iZone]);
 
-    }
-    else{
-      if (rank == MASTER_NODE)
-        cout << ": Euler/Navier-Stokes/RANS fluid iteration." << endl;
+      }
+      else{
+        if (rank == MASTER_NODE)
+          cout << ": Euler/Navier-Stokes/RANS fluid iteration." << endl;
       iteration_container[iZone] = new CFluidIteration(config_container[iZone]);
-    }
-    break;
+      }
+      break;
 
     case FEM_EULER: case FEM_NAVIER_STOKES: case FEM_RANS: case FEM_LES:
       if (rank == MASTER_NODE)
@@ -3167,9 +3166,11 @@ void CDriver::StartSolver(){
     if (!fsi) {
 
       /*--- Perform a dynamic mesh update if required. ---*/
-      config_container[ZONE_0]->Tick(&tick);
-      DynamicMeshUpdate(ExtIter);
-      config_container[ZONE_0]->Tock(tick,"DynamicMeshUpdate",1);
+      if (!fem_solver) {
+        config_container[ZONE_0]->Tick(&tick);
+        DynamicMeshUpdate(ExtIter);
+        config_container[ZONE_0]->Tock(tick,"DynamicMeshUpdate",1);
+      }
 
       /*--- Run a single iteration of the problem (fluid, elasticty, wave, heat, ...). ---*/
       config_container[ZONE_0]->Tick(&tick);
@@ -4795,10 +4796,9 @@ void CDiscAdjFluidDriver::DirectRun(){
 
   unsigned short iZone, jZone;
   bool unsteady = config_container[ZONE_0]->GetUnsteady_Simulation() != STEADY;
-  int rank = MASTER_NODE;
-  bool turbulent = config_container[ZONE_0]->GetKind_Turb_Model() != NONE;
 
 #ifdef HAVE_MPI
+  int rank;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 #endif
 
@@ -4857,8 +4857,6 @@ CDiscAdjTurbomachineryDriver::~CDiscAdjTurbomachineryDriver(){
 void CDiscAdjTurbomachineryDriver::DirectRun(){
 
   int rank = MASTER_NODE;
-  unsigned short unsteady = (config_container[MESH_0]->GetUnsteady_Simulation() == DT_STEPPING_1ST) ||
-                            (config_container[MESH_0]->GetUnsteady_Simulation() == DT_STEPPING_2ND);
 #ifdef HAVE_MPI
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 #endif
