@@ -1002,6 +1002,9 @@ void CConfig::SetConfig_Options(unsigned short val_iZone, unsigned short val_nZo
   /*!\brief MARKER_HEATFLUX  \n DESCRIPTION: Specified heat flux wall boundary marker(s)
    Format: ( Heat flux marker, wall heat flux (static), ... ) \ingroup Config*/
   addStringDoubleListOption("MARKER_HEATFLUX", nMarker_HeatFlux, Marker_HeatFlux, Heat_Flux);
+  /*!\brief MARKER_WM_1D_EQUIL_HF  \n DESCRIPTION: One dimensional equilibrium wall model with heatflux
+   Format: ( 1D wall model with heatflux marker, wall model thickness, ... ) \ingroup Config*/
+  addStringDoubleListOption("MARKER_WM_1D_EQUIL_HF", nMarker_wm_1d_equil_hf, Marker_wm_1d_equil_hf, WallModel_Thickness);
   /*!\brief MARKER_ENGINE_INFLOW  \n DESCRIPTION: Engine inflow boundary marker(s)
    Format: ( nacelle inflow marker, fan face Mach, ... ) \ingroup Config*/
   addStringDoubleListOption("MARKER_ENGINE_INFLOW", nMarker_EngineInflow, Marker_EngineInflow, EngineInflow_Target);
