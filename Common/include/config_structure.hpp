@@ -200,7 +200,6 @@ private:
   nMarker_Outlet,					/*!< \brief Number of outlet flow markers. */
   nMarker_Isothermal,     /*!< \brief Number of isothermal wall boundaries. */
   nMarker_HeatFlux,       /*!< \brief Number of constant heat flux wall boundaries. */
-  nMarker_wm_1d_equil_hf,    /*!< \brief Number of one-dimensional wall model with heat flux boundary conditions. */
   nMarker_EngineExhaust,					/*!< \brief Number of nacelle exhaust flow markers. */
   nMarker_EngineInflow,					/*!< \brief Number of nacelle inflow flow markers. */
   nMarker_Clamped,						/*!< \brief Number of clamped markers in the FEM. */
@@ -241,7 +240,6 @@ private:
   *Marker_Outlet,					/*!< \brief Outlet flow markers. */
   *Marker_Isothermal,     /*!< \brief Isothermal wall markers. */
   *Marker_HeatFlux,       /*!< \brief Constant heat flux wall markers. */
-  *Marker_wm_1d_equil_hf, /*!< \brief One dimensional equilibrium wall model with heat flux wall markers. */
   *Marker_EngineInflow,					/*!< \brief Engine Inflow flow markers. */
   *Marker_EngineExhaust,					/*!< \brief Engine Exhaust flow markers. */
   *Marker_Clamped,						/*!< \brief Clamped markers. */
@@ -294,7 +292,6 @@ private:
   su2double *Outlet_Pressure;    /*!< \brief Specified back pressures (static) for outlet boundaries. */
   su2double *Isothermal_Temperature; /*!< \brief Specified isothermal wall temperatures (static). */
   su2double *Heat_Flux;  /*!< \brief Specified wall heat fluxes. */
-  su2double *WallModel_Thickness; /*!< \brief Specified wall-model thickness. */
   su2double *Displ_Value;    /*!< \brief Specified displacement for displacement boundaries. */
   su2double *Load_Value;    /*!< \brief Specified force for load boundaries. */
   su2double *Load_Dir_Value;    /*!< \brief Specified force for load boundaries defined in cartesian coordinates. */
