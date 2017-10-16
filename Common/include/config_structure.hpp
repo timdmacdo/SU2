@@ -481,7 +481,7 @@ private:
   SpatialOrder_Turb,		/*!< \brief Order of the spatial numerical integration.*/
   SpatialOrder_AdjFlow,		/*!< \brief Order of the spatial numerical integration.*/
   SpatialOrder_AdjTurb;		/*!< \brief Order of the spatial numerical integration.*/
-  bool EulerPersson;        /*!< \brief Boolean to determine whether the simulation is FSI or not. */
+  bool EulerPersson;        /*!< \brief Boolean to determine whether using Persson's shock capturing method in Euler flow DG-FEM */
   bool FSI_Problem;			/*!< \brief Boolean to determine whether the simulation is FSI or not. */
   bool AD_Mode;         /*!< \brief Algorithmic Differentiation support. */
   unsigned short Kind_Material_Compress,	/*!< \brief Determines if the material is compressible or incompressible (structural analysis). */
@@ -496,6 +496,7 @@ private:
   unsigned long Linear_Solver_Iter;		/*!< \brief Max iterations of the linear solver for the implicit formulation. */
   unsigned long Linear_Solver_Iter_FSI_Struc;		/*!< \brief Max iterations of the linear solver for FSI applications and structural solver. */
   unsigned long Linear_Solver_Restart_Frequency;   /*!< \brief Restart frequency of the linear solver for the implicit formulation. */
+  unsigned short Linear_Solver_ILU_n;		/*!< \brief ILU fill=in level. */
   su2double SemiSpan;		/*!< \brief Wing Semi span. */
   su2double Roe_Kappa;		/*!< \brief Relaxation of the Roe scheme. */
   su2double Relaxation_Factor_Flow;		/*!< \brief Relaxation coefficient of the linear solver mean flow. */
@@ -3251,6 +3252,12 @@ public:
    * \return Max number of iterations of the linear solver for the implicit formulation.
    */
   unsigned long GetLinear_Solver_Iter(void);
+
+  /*!
+   * \brief Get the ILU fill-in level for the linear solver.
+   * \return Fill in level of the ILU preconditioner for the linear solver.
+   */
+  unsigned short GetLinear_Solver_ILU_n(void);
 
   /*!
    * \brief Get restart frequency of the linear solver for the implicit formulation.
@@ -7477,14 +7484,14 @@ public:
   unsigned short GetPredictorOrder(void);
 
   /*!
-   * \brief Get boolean for using Persson's shock capturing in Euler flow
-   * \return Boolean for using Persson's shock capturing in Euler flow
+   * \brief Get boolean for using Persson's shock capturing method in Euler flow DG-FEM
+   * \return Boolean for using Persson's shock capturing method in Euler flow DG-FEM
    */
   bool GetEulerPersson(void);
 
   /*!
-   * \brief Set boolean for using Persson's shock capturing in Euler flow
-   * \param[in] val_EulerPersson - Boolean for using Persson's shock capturing in Euler flow
+   * \brief Set boolean for using Persson's shock capturing method in Euler flow DG-FEM
+   * \param[in] val_EulerPersson - Boolean for using Persson's shock capturing method in Euler flow DG-FEM
    */
   void SetEulerPersson(bool val_EulerPersson);
 
