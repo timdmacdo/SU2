@@ -162,7 +162,8 @@ am__libSU2Core_a_SOURCES_DIST = ../include/definition_structure.hpp \
 	../include/numerics_structure.inl \
 	../include/output_structure.hpp \
 	../include/output_structure.inl ../include/sgs_model.hpp \
-	../include/sgs_model.inl ../include/solver_structure.hpp \
+	../include/sgs_model.inl ../include/wall_model.hpp \
+	../include/solver_structure.hpp \
 	../include/solver_structure.inl ../include/SU2_CFD.hpp \
 	../include/task_definition.hpp ../include/task_definition.inl \
 	../include/transport_model.hpp ../include/transport_model.inl \
@@ -221,7 +222,8 @@ am__libSU2Core_a_SOURCES_DIST = ../include/definition_structure.hpp \
 	../src/variable_direct_turbulent.cpp \
 	../src/variable_direct_wave.cpp \
 	../src/variable_direct_elasticity.cpp \
-	../src/variable_structure.cpp ../src/variable_template.cpp
+	../src/variable_structure.cpp ../src/variable_template.cpp \
+	../src/wall_model.cpp
 am__dirstamp = $(am__leading_dot)dirstamp
 am__objects_1 = ../src/libSU2Core_a-definition_structure.$(OBJEXT) \
 	../src/libSU2Core_a-fluid_model.$(OBJEXT) \
@@ -288,7 +290,8 @@ am__objects_1 = ../src/libSU2Core_a-definition_structure.$(OBJEXT) \
 	../src/libSU2Core_a-variable_direct_wave.$(OBJEXT) \
 	../src/libSU2Core_a-variable_direct_elasticity.$(OBJEXT) \
 	../src/libSU2Core_a-variable_structure.$(OBJEXT) \
-	../src/libSU2Core_a-variable_template.$(OBJEXT)
+	../src/libSU2Core_a-variable_template.$(OBJEXT) \
+	../src/libSU2Core_a-wall_model.$(OBJEXT)
 @BUILD_NORMAL_TRUE@am_libSU2Core_a_OBJECTS = $(am__objects_1)
 libSU2Core_a_OBJECTS = $(am_libSU2Core_a_OBJECTS)
 @BUILD_NORMAL_TRUE@am__EXEEXT_1 = ../bin/SU2_CFD$(EXEEXT)
@@ -318,7 +321,8 @@ am_____bin_SU2_CFD_AD_SOURCES_DIST = ../include/SU2_CFD.hpp \
 	../include/numerics_structure.inl \
 	../include/output_structure.hpp \
 	../include/output_structure.inl ../include/sgs_model.hpp \
-	../include/sgs_model.inl ../include/solver_structure.hpp \
+	../include/sgs_model.inl ../include/wall_model.hpp \
+	../include/solver_structure.hpp \
 	../include/solver_structure.inl ../include/task_definition.hpp \
 	../include/task_definition.inl ../include/transport_model.hpp \
 	../include/transport_model.inl \
@@ -377,7 +381,8 @@ am_____bin_SU2_CFD_AD_SOURCES_DIST = ../include/SU2_CFD.hpp \
 	../src/variable_direct_turbulent.cpp \
 	../src/variable_direct_wave.cpp \
 	../src/variable_direct_elasticity.cpp \
-	../src/variable_structure.cpp ../src/variable_template.cpp
+	../src/variable_structure.cpp ../src/variable_template.cpp \
+	../src/wall_model.cpp
 am__objects_3 = ../src/___bin_SU2_CFD_AD-SU2_CFD.$(OBJEXT)
 am__objects_4 =  \
 	../src/___bin_SU2_CFD_AD-definition_structure.$(OBJEXT) \
@@ -445,7 +450,8 @@ am__objects_4 =  \
 	../src/___bin_SU2_CFD_AD-variable_direct_wave.$(OBJEXT) \
 	../src/___bin_SU2_CFD_AD-variable_direct_elasticity.$(OBJEXT) \
 	../src/___bin_SU2_CFD_AD-variable_structure.$(OBJEXT) \
-	../src/___bin_SU2_CFD_AD-variable_template.$(OBJEXT)
+	../src/___bin_SU2_CFD_AD-variable_template.$(OBJEXT) \
+	../src/___bin_SU2_CFD_AD-wall_model.$(OBJEXT)
 @BUILD_REVERSE_TRUE@am____bin_SU2_CFD_AD_OBJECTS = $(am__objects_3) \
 @BUILD_REVERSE_TRUE@	$(am__objects_4)
 ___bin_SU2_CFD_AD_OBJECTS = $(am____bin_SU2_CFD_AD_OBJECTS)
@@ -465,7 +471,8 @@ am_____bin_SU2_CFD_DIRECTDIFF_SOURCES_DIST = ../include/SU2_CFD.hpp \
 	../include/numerics_structure.inl \
 	../include/output_structure.hpp \
 	../include/output_structure.inl ../include/sgs_model.hpp \
-	../include/sgs_model.inl ../include/solver_structure.hpp \
+	../include/sgs_model.inl ../include/wall_model.hpp \
+	../include/solver_structure.hpp \
 	../include/solver_structure.inl ../include/task_definition.hpp \
 	../include/task_definition.inl ../include/transport_model.hpp \
 	../include/transport_model.inl \
@@ -524,7 +531,8 @@ am_____bin_SU2_CFD_DIRECTDIFF_SOURCES_DIST = ../include/SU2_CFD.hpp \
 	../src/variable_direct_turbulent.cpp \
 	../src/variable_direct_wave.cpp \
 	../src/variable_direct_elasticity.cpp \
-	../src/variable_structure.cpp ../src/variable_template.cpp
+	../src/variable_structure.cpp ../src/variable_template.cpp \
+	../src/wall_model.cpp
 am__objects_5 = ../src/___bin_SU2_CFD_DIRECTDIFF-SU2_CFD.$(OBJEXT)
 am__objects_6 = ../src/___bin_SU2_CFD_DIRECTDIFF-definition_structure.$(OBJEXT) \
 	../src/___bin_SU2_CFD_DIRECTDIFF-fluid_model.$(OBJEXT) \
@@ -591,7 +599,8 @@ am__objects_6 = ../src/___bin_SU2_CFD_DIRECTDIFF-definition_structure.$(OBJEXT) 
 	../src/___bin_SU2_CFD_DIRECTDIFF-variable_direct_wave.$(OBJEXT) \
 	../src/___bin_SU2_CFD_DIRECTDIFF-variable_direct_elasticity.$(OBJEXT) \
 	../src/___bin_SU2_CFD_DIRECTDIFF-variable_structure.$(OBJEXT) \
-	../src/___bin_SU2_CFD_DIRECTDIFF-variable_template.$(OBJEXT)
+	../src/___bin_SU2_CFD_DIRECTDIFF-variable_template.$(OBJEXT) \
+	../src/___bin_SU2_CFD_DIRECTDIFF-wall_model.$(OBJEXT)
 @BUILD_DIRECTDIFF_TRUE@am____bin_SU2_CFD_DIRECTDIFF_OBJECTS =  \
 @BUILD_DIRECTDIFF_TRUE@	$(am__objects_5) $(am__objects_6)
 ___bin_SU2_CFD_DIRECTDIFF_OBJECTS =  \
@@ -848,6 +857,7 @@ libSU2Core_sources = \
   ../include/output_structure.inl \
   ../include/sgs_model.hpp \
   ../include/sgs_model.inl \
+  ../include/wall_model.hpp \
   ../include/solver_structure.hpp \
   ../include/solver_structure.inl \
   ../include/SU2_CFD.hpp \
@@ -924,7 +934,8 @@ libSU2Core_sources = \
   ../src/variable_direct_wave.cpp \
   ../src/variable_direct_elasticity.cpp \
   ../src/variable_structure.cpp \
-  ../src/variable_template.cpp
+  ../src/variable_template.cpp \
+  ../src/wall_model.cpp
 
 su2_cfd_sources = \
   ../include/SU2_CFD.hpp \
@@ -1143,6 +1154,11 @@ clean-noinstLIBRARIES:
 	../src/$(am__dirstamp) ../src/$(DEPDIR)/$(am__dirstamp)
 ../src/libSU2Core_a-variable_template.$(OBJEXT):  \
 	../src/$(am__dirstamp) ../src/$(DEPDIR)/$(am__dirstamp)
+<<<<<<< HEAD
+=======
+../src/libSU2Core_a-wall_model.$(OBJEXT): ../src/$(am__dirstamp) \
+	../src/$(DEPDIR)/$(am__dirstamp)
+>>>>>>> e2b292eec25909f5f0ebd4f2f0310cb3c05d3f0c
 
 libSU2Core.a: $(libSU2Core_a_OBJECTS) $(libSU2Core_a_DEPENDENCIES) $(EXTRA_libSU2Core_a_DEPENDENCIES) 
 	$(AM_V_at)-rm -f libSU2Core.a
@@ -1333,6 +1349,11 @@ clean-binPROGRAMS:
 	../src/$(am__dirstamp) ../src/$(DEPDIR)/$(am__dirstamp)
 ../src/___bin_SU2_CFD_AD-variable_template.$(OBJEXT):  \
 	../src/$(am__dirstamp) ../src/$(DEPDIR)/$(am__dirstamp)
+<<<<<<< HEAD
+=======
+../src/___bin_SU2_CFD_AD-wall_model.$(OBJEXT): ../src/$(am__dirstamp) \
+	../src/$(DEPDIR)/$(am__dirstamp)
+>>>>>>> e2b292eec25909f5f0ebd4f2f0310cb3c05d3f0c
 
 ../bin/SU2_CFD_AD$(EXEEXT): $(___bin_SU2_CFD_AD_OBJECTS) $(___bin_SU2_CFD_AD_DEPENDENCIES) $(EXTRA____bin_SU2_CFD_AD_DEPENDENCIES) ../bin/$(am__dirstamp)
 	@rm -f ../bin/SU2_CFD_AD$(EXEEXT)
@@ -1471,6 +1492,11 @@ clean-binPROGRAMS:
 	../src/$(am__dirstamp) ../src/$(DEPDIR)/$(am__dirstamp)
 ../src/___bin_SU2_CFD_DIRECTDIFF-variable_template.$(OBJEXT):  \
 	../src/$(am__dirstamp) ../src/$(DEPDIR)/$(am__dirstamp)
+<<<<<<< HEAD
+=======
+../src/___bin_SU2_CFD_DIRECTDIFF-wall_model.$(OBJEXT):  \
+	../src/$(am__dirstamp) ../src/$(DEPDIR)/$(am__dirstamp)
+>>>>>>> e2b292eec25909f5f0ebd4f2f0310cb3c05d3f0c
 
 ../bin/SU2_CFD_DIRECTDIFF$(EXEEXT): $(___bin_SU2_CFD_DIRECTDIFF_OBJECTS) $(___bin_SU2_CFD_DIRECTDIFF_DEPENDENCIES) $(EXTRA____bin_SU2_CFD_DIRECTDIFF_DEPENDENCIES) ../bin/$(am__dirstamp)
 	@rm -f ../bin/SU2_CFD_DIRECTDIFF$(EXEEXT)
@@ -1551,6 +1577,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@../src/$(DEPDIR)/___bin_SU2_CFD_AD-variable_direct_wave.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@../src/$(DEPDIR)/___bin_SU2_CFD_AD-variable_structure.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@../src/$(DEPDIR)/___bin_SU2_CFD_AD-variable_template.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@../src/$(DEPDIR)/___bin_SU2_CFD_AD-wall_model.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@../src/$(DEPDIR)/___bin_SU2_CFD_DIRECTDIFF-SU2_CFD.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@../src/$(DEPDIR)/___bin_SU2_CFD_DIRECTDIFF-definition_structure.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@../src/$(DEPDIR)/___bin_SU2_CFD_DIRECTDIFF-driver_structure.Po@am__quote@
@@ -1618,6 +1645,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@../src/$(DEPDIR)/___bin_SU2_CFD_DIRECTDIFF-variable_direct_wave.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@../src/$(DEPDIR)/___bin_SU2_CFD_DIRECTDIFF-variable_structure.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@../src/$(DEPDIR)/___bin_SU2_CFD_DIRECTDIFF-variable_template.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@../src/$(DEPDIR)/___bin_SU2_CFD_DIRECTDIFF-wall_model.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@../src/$(DEPDIR)/libSU2Core_a-definition_structure.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@../src/$(DEPDIR)/libSU2Core_a-driver_structure.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@../src/$(DEPDIR)/libSU2Core_a-fluid_model.Po@am__quote@
@@ -1684,6 +1712,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@../src/$(DEPDIR)/libSU2Core_a-variable_direct_wave.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@../src/$(DEPDIR)/libSU2Core_a-variable_structure.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@../src/$(DEPDIR)/libSU2Core_a-variable_template.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@../src/$(DEPDIR)/libSU2Core_a-wall_model.Po@am__quote@
 
 .cpp.o:
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
@@ -2624,6 +2653,20 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='../src/variable_template.cpp' object='../src/libSU2Core_a-variable_template.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libSU2Core_a_CXXFLAGS) $(CXXFLAGS) -c -o ../src/libSU2Core_a-variable_template.obj `if test -f '../src/variable_template.cpp'; then $(CYGPATH_W) '../src/variable_template.cpp'; else $(CYGPATH_W) '$(srcdir)/../src/variable_template.cpp'; fi`
+
+../src/libSU2Core_a-wall_model.o: ../src/wall_model.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libSU2Core_a_CXXFLAGS) $(CXXFLAGS) -MT ../src/libSU2Core_a-wall_model.o -MD -MP -MF ../src/$(DEPDIR)/libSU2Core_a-wall_model.Tpo -c -o ../src/libSU2Core_a-wall_model.o `test -f '../src/wall_model.cpp' || echo '$(srcdir)/'`../src/wall_model.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) ../src/$(DEPDIR)/libSU2Core_a-wall_model.Tpo ../src/$(DEPDIR)/libSU2Core_a-wall_model.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='../src/wall_model.cpp' object='../src/libSU2Core_a-wall_model.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libSU2Core_a_CXXFLAGS) $(CXXFLAGS) -c -o ../src/libSU2Core_a-wall_model.o `test -f '../src/wall_model.cpp' || echo '$(srcdir)/'`../src/wall_model.cpp
+
+../src/libSU2Core_a-wall_model.obj: ../src/wall_model.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libSU2Core_a_CXXFLAGS) $(CXXFLAGS) -MT ../src/libSU2Core_a-wall_model.obj -MD -MP -MF ../src/$(DEPDIR)/libSU2Core_a-wall_model.Tpo -c -o ../src/libSU2Core_a-wall_model.obj `if test -f '../src/wall_model.cpp'; then $(CYGPATH_W) '../src/wall_model.cpp'; else $(CYGPATH_W) '$(srcdir)/../src/wall_model.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) ../src/$(DEPDIR)/libSU2Core_a-wall_model.Tpo ../src/$(DEPDIR)/libSU2Core_a-wall_model.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='../src/wall_model.cpp' object='../src/libSU2Core_a-wall_model.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libSU2Core_a_CXXFLAGS) $(CXXFLAGS) -c -o ../src/libSU2Core_a-wall_model.obj `if test -f '../src/wall_model.cpp'; then $(CYGPATH_W) '../src/wall_model.cpp'; else $(CYGPATH_W) '$(srcdir)/../src/wall_model.cpp'; fi`
 
 ../src/___bin_SU2_CFD-SU2_CFD.o: ../src/SU2_CFD.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(___bin_SU2_CFD_CXXFLAGS) $(CXXFLAGS) -MT ../src/___bin_SU2_CFD-SU2_CFD.o -MD -MP -MF ../src/$(DEPDIR)/___bin_SU2_CFD-SU2_CFD.Tpo -c -o ../src/___bin_SU2_CFD-SU2_CFD.o `test -f '../src/SU2_CFD.cpp' || echo '$(srcdir)/'`../src/SU2_CFD.cpp
@@ -3577,6 +3620,20 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(___bin_SU2_CFD_AD_CXXFLAGS) $(CXXFLAGS) -c -o ../src/___bin_SU2_CFD_AD-variable_template.obj `if test -f '../src/variable_template.cpp'; then $(CYGPATH_W) '../src/variable_template.cpp'; else $(CYGPATH_W) '$(srcdir)/../src/variable_template.cpp'; fi`
 
+../src/___bin_SU2_CFD_AD-wall_model.o: ../src/wall_model.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(___bin_SU2_CFD_AD_CXXFLAGS) $(CXXFLAGS) -MT ../src/___bin_SU2_CFD_AD-wall_model.o -MD -MP -MF ../src/$(DEPDIR)/___bin_SU2_CFD_AD-wall_model.Tpo -c -o ../src/___bin_SU2_CFD_AD-wall_model.o `test -f '../src/wall_model.cpp' || echo '$(srcdir)/'`../src/wall_model.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) ../src/$(DEPDIR)/___bin_SU2_CFD_AD-wall_model.Tpo ../src/$(DEPDIR)/___bin_SU2_CFD_AD-wall_model.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='../src/wall_model.cpp' object='../src/___bin_SU2_CFD_AD-wall_model.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(___bin_SU2_CFD_AD_CXXFLAGS) $(CXXFLAGS) -c -o ../src/___bin_SU2_CFD_AD-wall_model.o `test -f '../src/wall_model.cpp' || echo '$(srcdir)/'`../src/wall_model.cpp
+
+../src/___bin_SU2_CFD_AD-wall_model.obj: ../src/wall_model.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(___bin_SU2_CFD_AD_CXXFLAGS) $(CXXFLAGS) -MT ../src/___bin_SU2_CFD_AD-wall_model.obj -MD -MP -MF ../src/$(DEPDIR)/___bin_SU2_CFD_AD-wall_model.Tpo -c -o ../src/___bin_SU2_CFD_AD-wall_model.obj `if test -f '../src/wall_model.cpp'; then $(CYGPATH_W) '../src/wall_model.cpp'; else $(CYGPATH_W) '$(srcdir)/../src/wall_model.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) ../src/$(DEPDIR)/___bin_SU2_CFD_AD-wall_model.Tpo ../src/$(DEPDIR)/___bin_SU2_CFD_AD-wall_model.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='../src/wall_model.cpp' object='../src/___bin_SU2_CFD_AD-wall_model.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(___bin_SU2_CFD_AD_CXXFLAGS) $(CXXFLAGS) -c -o ../src/___bin_SU2_CFD_AD-wall_model.obj `if test -f '../src/wall_model.cpp'; then $(CYGPATH_W) '../src/wall_model.cpp'; else $(CYGPATH_W) '$(srcdir)/../src/wall_model.cpp'; fi`
+
 ../src/___bin_SU2_CFD_DIRECTDIFF-SU2_CFD.o: ../src/SU2_CFD.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(___bin_SU2_CFD_DIRECTDIFF_CXXFLAGS) $(CXXFLAGS) -MT ../src/___bin_SU2_CFD_DIRECTDIFF-SU2_CFD.o -MD -MP -MF ../src/$(DEPDIR)/___bin_SU2_CFD_DIRECTDIFF-SU2_CFD.Tpo -c -o ../src/___bin_SU2_CFD_DIRECTDIFF-SU2_CFD.o `test -f '../src/SU2_CFD.cpp' || echo '$(srcdir)/'`../src/SU2_CFD.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) ../src/$(DEPDIR)/___bin_SU2_CFD_DIRECTDIFF-SU2_CFD.Tpo ../src/$(DEPDIR)/___bin_SU2_CFD_DIRECTDIFF-SU2_CFD.Po
@@ -4515,6 +4572,23 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(___bin_SU2_CFD_DIRECTDIFF_CXXFLAGS) $(CXXFLAGS) -c -o ../src/___bin_SU2_CFD_DIRECTDIFF-variable_template.obj `if test -f '../src/variable_template.cpp'; then $(CYGPATH_W) '../src/variable_template.cpp'; else $(CYGPATH_W) '$(srcdir)/../src/variable_template.cpp'; fi`
 
+<<<<<<< HEAD
+=======
+../src/___bin_SU2_CFD_DIRECTDIFF-wall_model.o: ../src/wall_model.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(___bin_SU2_CFD_DIRECTDIFF_CXXFLAGS) $(CXXFLAGS) -MT ../src/___bin_SU2_CFD_DIRECTDIFF-wall_model.o -MD -MP -MF ../src/$(DEPDIR)/___bin_SU2_CFD_DIRECTDIFF-wall_model.Tpo -c -o ../src/___bin_SU2_CFD_DIRECTDIFF-wall_model.o `test -f '../src/wall_model.cpp' || echo '$(srcdir)/'`../src/wall_model.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) ../src/$(DEPDIR)/___bin_SU2_CFD_DIRECTDIFF-wall_model.Tpo ../src/$(DEPDIR)/___bin_SU2_CFD_DIRECTDIFF-wall_model.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='../src/wall_model.cpp' object='../src/___bin_SU2_CFD_DIRECTDIFF-wall_model.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(___bin_SU2_CFD_DIRECTDIFF_CXXFLAGS) $(CXXFLAGS) -c -o ../src/___bin_SU2_CFD_DIRECTDIFF-wall_model.o `test -f '../src/wall_model.cpp' || echo '$(srcdir)/'`../src/wall_model.cpp
+
+../src/___bin_SU2_CFD_DIRECTDIFF-wall_model.obj: ../src/wall_model.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(___bin_SU2_CFD_DIRECTDIFF_CXXFLAGS) $(CXXFLAGS) -MT ../src/___bin_SU2_CFD_DIRECTDIFF-wall_model.obj -MD -MP -MF ../src/$(DEPDIR)/___bin_SU2_CFD_DIRECTDIFF-wall_model.Tpo -c -o ../src/___bin_SU2_CFD_DIRECTDIFF-wall_model.obj `if test -f '../src/wall_model.cpp'; then $(CYGPATH_W) '../src/wall_model.cpp'; else $(CYGPATH_W) '$(srcdir)/../src/wall_model.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) ../src/$(DEPDIR)/___bin_SU2_CFD_DIRECTDIFF-wall_model.Tpo ../src/$(DEPDIR)/___bin_SU2_CFD_DIRECTDIFF-wall_model.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='../src/wall_model.cpp' object='../src/___bin_SU2_CFD_DIRECTDIFF-wall_model.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(___bin_SU2_CFD_DIRECTDIFF_CXXFLAGS) $(CXXFLAGS) -c -o ../src/___bin_SU2_CFD_DIRECTDIFF-wall_model.obj `if test -f '../src/wall_model.cpp'; then $(CYGPATH_W) '../src/wall_model.cpp'; else $(CYGPATH_W) '$(srcdir)/../src/wall_model.cpp'; fi`
+
+>>>>>>> e2b292eec25909f5f0ebd4f2f0310cb3c05d3f0c
 ID: $(am__tagged_files)
 	$(am__define_uniq_tagged_files); mkid -fID $$unique
 tags: tags-am

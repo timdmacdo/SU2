@@ -52,6 +52,7 @@
 #include "task_definition.hpp"
 #include "numerics_structure.hpp"
 #include "sgs_model.hpp"
+#include "wall_model.hpp"
 #include "variable_structure.hpp"
 #include "../../Common/include/gauss_structure.hpp"
 #include "../../Common/include/element_structure.hpp"
@@ -14242,6 +14243,9 @@ private:
 
   CSGSModel *SGSModel;     /*!< \brief LES Subgrid Scale model. */
   bool SGSModelUsed;       /*!< \brief Whether or not an LES Subgrid Scale model is used. */
+
+  CWallModel **wallModel;     /*!< \brief wall model for LES. */
+  bool wallModelUsed;       /*!< \brief Whether or not an LES wall model is used. */
 
   su2double
   *ForceViscous,         /*!< \brief Viscous force for each boundary. */

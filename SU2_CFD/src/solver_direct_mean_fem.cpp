@@ -8333,6 +8333,10 @@ CFEM_DG_NSSolver::CFEM_DG_NSSolver(void) : CFEM_DG_EulerSolver() {
   /*--- Set the SGS model to NULL and indicate that no SGS model is used. ---*/
   SGSModel     = NULL;
   SGSModelUsed = false;
+
+  /*--- Set the wall model to NULL and indicate that no wall model is used. ---*/
+  wallModel     = NULL;
+  wallModelUsed = false;
 }
 
 CFEM_DG_NSSolver::CFEM_DG_NSSolver(CGeometry *geometry, CConfig *config, unsigned short iMesh)
@@ -8442,6 +8446,21 @@ CFEM_DG_NSSolver::CFEM_DG_NSSolver(CGeometry *geometry, CConfig *config, unsigne
     SGSModel     = NULL;
     SGSModelUsed = false;
   }
+
+  /*--- Set the wall model information ---*/
+  wallModel = new CWallModel*[nMarker];
+  wallModelUsed = false;
+
+  /* Loop over all boundaries. */
+  for (unsigned short iMarker = 0; iMarker < config->GetnMarker_All(); iMarker++) {
+    string marker_name = geometry->GetMarker_Tag(iMarker);
+    if(config->GetWallFunction_Treatment(marker_name) == EQUILIBRIUM_WALL_MODEL) {
+      wallModel[iMarker] = new CWallModel1DEQ;
+      wallModelUsed = true;
+      /* Initialize wall model for this marker/boundary */
+      //wallModel[iMarker]->Initialize(config, geometry, this);
+    }
+  }
 }
 
 CFEM_DG_NSSolver::~CFEM_DG_NSSolver(void) {
@@ -8485,6 +8504,7 @@ CFEM_DG_NSSolver::~CFEM_DG_NSSolver(void) {
   }
 
   if( SGSModel ) delete SGSModel;
+  if( wallModel ) delete wallModel;
 }
 
 void CFEM_DG_NSSolver::Friction_Forces(CGeometry *geometry, CConfig *config) {

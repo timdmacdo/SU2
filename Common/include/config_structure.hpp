@@ -2631,6 +2631,12 @@ public:
   unsigned short GetnMarker_Analyze(void);
 
   /*!
+   * \brief Get the total number of wall function markers.
+   * \return Total number of wall function markers.
+   */
+  unsigned short GetnMarker_WallFunctions(void);
+
+  /*!
    * \brief Get the total number of objectives in kind_objective list
    * \return Total number of objectives in kind_objective list
    */

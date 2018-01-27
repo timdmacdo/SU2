@@ -70,6 +70,7 @@ libSU2Core_sources = \
   ../include/output_structure.inl \
   ../include/sgs_model.hpp \
   ../include/sgs_model.inl \
+  ../include/wall_model.hpp \
   ../include/solver_structure.hpp \
   ../include/solver_structure.inl \
   ../include/SU2_CFD.hpp \
@@ -146,7 +147,8 @@ libSU2Core_sources = \
   ../src/variable_direct_wave.cpp \
   ../src/variable_direct_elasticity.cpp \
   ../src/variable_structure.cpp \
-  ../src/variable_template.cpp
+  ../src/variable_template.cpp \
+  ../src/wall_model.cpp
 
 su2_cfd_sources = \
   ../include/SU2_CFD.hpp \
