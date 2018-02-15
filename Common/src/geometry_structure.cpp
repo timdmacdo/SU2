@@ -33,6 +33,8 @@
 
 #include "../include/geometry_structure.hpp"
 #include "../include/adt_structure.hpp"
+#include <iostream>
+#include <string>
 
 /*--- Epsilon definition ---*/
 
@@ -13151,9 +13153,11 @@ su2double CPhysicalGeometry::Compute_MaxThickness(su2double *Plane_P0, su2double
   for (iVertex = 0; iVertex < Xcoord_Airfoil_.size(); iVertex++) {
     if (Zcoord_Normal[iVertex] < 0.0) {
       Thickness = fabs(Zcoord_Airfoil_[iVertex] - GetSpline(Xcoord, Zcoord, Z2coord, n, Xcoord_Airfoil_[iVertex]));
-      if (Thickness > MaxThickness_Value) { MaxThickness_Value = Thickness; }
+      if (Thickness > MaxThickness_Value) { MaxThickness_Value = Thickness; cout << Thickness << endl; }
     }
   }
+
+  cout << "computing max thickness";
   
   return MaxThickness_Value;
   
