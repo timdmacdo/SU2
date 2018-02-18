@@ -1,0 +1,13 @@
+externals/autotools/include
+externals/autotools/include/libltdl
+externals/autotools/share/libtool/libltdl
+externals/autotools/share/libtool/libltdl/libltdl
+externals/cgns
+externals/cgns/adf
+externals/metis/GKlib
+externals/metis/include
+externals/metis/libmetis
+externals/parmetis/include
+externals/parmetis/libparmetis
+externals/tecio/include
+externals/tecio/tecsrc
