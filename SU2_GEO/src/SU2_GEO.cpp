@@ -457,7 +457,7 @@ int main(int argc, char *argv[]) {
           ObjectiveFunc[3*nPlane+iPlane]  = geometry_container[ZONE_0]->Compute_LERadius(Plane_P0[iPlane], Plane_Normal[iPlane], Xcoord_Airfoil[iPlane], Ycoord_Airfoil[iPlane], Zcoord_Airfoil[iPlane]);
           ObjectiveFunc[4*nPlane+iPlane]  = ObjectiveFunc[1*nPlane+iPlane]/ObjectiveFunc[2*nPlane+iPlane];
           ObjectiveFunc[5*nPlane+iPlane]  = geometry_container[ZONE_0]->Compute_Twist(Plane_P0[iPlane], Plane_Normal[iPlane], Xcoord_Airfoil[iPlane], Ycoord_Airfoil[iPlane], Zcoord_Airfoil[iPlane]);
-          //ObjectiveFunc[6*nPlane+iPlane]  = geometry_container[ZONE_0]->Compute_MinThickness(Plane_P0[iPlane], Plane_Normal[iPlane], config_container[ZONE_0], Xcoord_Airfoil[iPlane], Ycoord_Airfoil[iPlane], Zcoord_Airfoil[iPlane]);
+          ObjectiveFunc[6*nPlane+iPlane]  = geometry_container[ZONE_0]->Compute_MinThickness(Plane_P0[iPlane], Plane_Normal[iPlane], config_container[ZONE_0], Xcoord_Airfoil[iPlane], Ycoord_Airfoil[iPlane], Zcoord_Airfoil[iPlane]);
 
           if (config_container[ZONE_0]->GetSystemMeasurements() == US)  cout << "Area: "             << ObjectiveFunc[0*nPlane+iPlane] << " in^2, ";
           else  cout << "Area: "                 << ObjectiveFunc[0*nPlane+iPlane] << " m^2, ";
@@ -478,7 +478,7 @@ int main(int argc, char *argv[]) {
           ObjectiveFunc[3*nPlane+iPlane]  = geometry_container[ZONE_0]->Compute_LERadius(Plane_P0[iPlane], Plane_Normal[iPlane], Xcoord_Airfoil[iPlane], Ycoord_Airfoil[iPlane], Zcoord_Airfoil[iPlane]);
           ObjectiveFunc[4*nPlane+iPlane]  = ObjectiveFunc[1*nPlane+iPlane]/ObjectiveFunc[2*nPlane+iPlane];
           ObjectiveFunc[5*nPlane+iPlane]  = geometry_container[ZONE_0]->Compute_Twist(Plane_P0[iPlane], Plane_Normal[iPlane], Xcoord_Airfoil[iPlane], Ycoord_Airfoil[iPlane], Zcoord_Airfoil[iPlane]);
-          //ObjectiveFunc[6*nPlane+iPlane]  = geometry_container[ZONE_0]->Compute_MinThickness(Plane_P0[iPlane], Plane_Normal[iPlane], config_container[ZONE_0], Xcoord_Airfoil[iPlane], Ycoord_Airfoil[iPlane], Zcoord_Airfoil[iPlane]);
+          ObjectiveFunc[6*nPlane+iPlane]  = geometry_container[ZONE_0]->Compute_MinThickness(Plane_P0[iPlane], Plane_Normal[iPlane], config_container[ZONE_0], Xcoord_Airfoil[iPlane], Ycoord_Airfoil[iPlane], Zcoord_Airfoil[iPlane]);
 
           if (config_container[ZONE_0]->GetSystemMeasurements() == US)  cout << "Area: "             << ObjectiveFunc[0*nPlane+iPlane] << " in^2, ";
           else  cout << "Area: "                 << ObjectiveFunc[0*nPlane+iPlane] << " m^2, ";
@@ -491,6 +491,8 @@ int main(int argc, char *argv[]) {
           cout << "ToC: "                        << ObjectiveFunc[4*nPlane+iPlane] << ", ";
           if (geometry_container[ZONE_0]->GetnDim() == 2) cout << "Alpha: "      << ObjectiveFunc[5*nPlane+iPlane] <<" deg.";
           else if (geometry_container[ZONE_0]->GetnDim() == 3) cout << "Twist angle: "      << ObjectiveFunc[5*nPlane+iPlane] <<" deg.";
+          if (config_container[ZONE_0]->GetSystemMeasurements() == US)  cout << "Thinness: "   << ObjectiveFunc[6*nPlane+iPlane] << " in, " << endl;
+          else cout << "Thickness: "             << ObjectiveFunc[6*nPlane+iPlane] << " m, " << endl;
         }
         
       }
@@ -505,7 +507,7 @@ int main(int argc, char *argv[]) {
     ObjFunc_file << "TITLE = \"SU2_GEO Evaluation\"" << endl;
     
     if (geometry_container[ZONE_0]->GetnDim() == 2) {
-      ObjFunc_file << "VARIABLES = \"AIRFOIL_AREA\",\"AIRFOIL_THICKNESS\",\"AIRFOIL_CHORD\",\"AIRFOIL_LE_RADIUS\",\"AIRFOIL_TOC\",\"AIRFOIL_ALPHA\"";
+      ObjFunc_file << "VARIABLES = \"AIRFOIL_AREA\",\"AIRFOIL_THICKNESS\",\"AIRFOIL_CHORD\",\"AIRFOIL_LE_RADIUS\",\"AIRFOIL_TOC\",\"AIRFOIL_ALPHA\",\"AIRFOIL_THINNESS\"";
     }
     else if (geometry_container[ZONE_0]->GetnDim() == 3) {
       
@@ -573,9 +575,10 @@ int main(int argc, char *argv[]) {
       if (geometry_container[ZONE_0]->GetnDim() == 3) {
         ObjFunc_file << Wing_Volume <<", "<< Wing_MinThickness <<", "<< Wing_MaxThickness <<", "<< Wing_MinChord <<", "<< Wing_MaxChord <<", "<< Wing_MinLERadius <<", "<< Wing_MaxLERadius<<", "<< Wing_MinToC <<", "<< Wing_MaxToC <<", "<< Wing_ObjFun_MinToC <<", "<< Wing_MaxTwist <<", "<< Wing_MaxCurvature <<", "<< Wing_MaxDihedral <<", ";
       }
-      for (iPlane = 0; iPlane < nPlane*6; iPlane++) {
+      for (iPlane = 0; iPlane < nPlane*7; iPlane++) {
         ObjFunc_file << ObjectiveFunc[iPlane];
-        if (iPlane != (nPlane*6)-1) ObjFunc_file <<", ";
+        cout << ObjectiveFunc[iPlane] << endl;
+        if (iPlane != (nPlane*7)-1) ObjFunc_file <<", ";
       }
     }
     
@@ -936,8 +939,8 @@ int main(int argc, char *argv[]) {
                 ObjectiveFunc_New[5*nPlane + iPlane] = geometry_container[ZONE_0]->Compute_Twist(Plane_P0[iPlane], Plane_Normal[iPlane], Xcoord_Airfoil[iPlane], Ycoord_Airfoil[iPlane], Zcoord_Airfoil[iPlane]);
                 Gradient[5*nPlane + iPlane] = (ObjectiveFunc_New[5*nPlane + iPlane] - ObjectiveFunc[5*nPlane + iPlane]) / delta_eps;
 
-                //ObjectiveFunc_New[6*nPlane + iPlane] = geometry_container[ZONE_0]->Compute_MinThickness(Plane_P0[iPlane], Plane_Normal[iPlane], config_container[ZONE_0], Xcoord_Airfoil[iPlane], Ycoord_Airfoil[iPlane], Zcoord_Airfoil[iPlane]);
-                //Gradient[6*nPlane + iPlane] = (ObjectiveFunc_New[6*nPlane + iPlane] - ObjectiveFunc[6*nPlane + iPlane]) / delta_eps;
+                ObjectiveFunc_New[6*nPlane + iPlane] = geometry_container[ZONE_0]->Compute_MinThickness(Plane_P0[iPlane], Plane_Normal[iPlane], config_container[ZONE_0], Xcoord_Airfoil[iPlane], Ycoord_Airfoil[iPlane], Zcoord_Airfoil[iPlane]);
+                Gradient[6*nPlane + iPlane] = (ObjectiveFunc_New[6*nPlane + iPlane] - ObjectiveFunc[6*nPlane + iPlane]) / delta_eps;
 
               }
               
@@ -961,8 +964,8 @@ int main(int argc, char *argv[]) {
                 ObjectiveFunc_New[5*nPlane + iPlane] = geometry_container[ZONE_0]->Compute_Twist(Plane_P0[iPlane], Plane_Normal[iPlane], Xcoord_Airfoil[iPlane], Ycoord_Airfoil[iPlane], Zcoord_Airfoil[iPlane]);
                 Gradient[5*nPlane + iPlane] = (ObjectiveFunc_New[5*nPlane + iPlane] - ObjectiveFunc[5*nPlane + iPlane]) / delta_eps;
 
-                //ObjectiveFunc_New[6*nPlane + iPlane] = geometry_container[ZONE_0]->Compute_MinThickness(Plane_P0[iPlane], Plane_Normal[iPlane], config_container[ZONE_0], Xcoord_Airfoil[iPlane], Ycoord_Airfoil[iPlane], Zcoord_Airfoil[iPlane]);
-                //Gradient[6*nPlane + iPlane] = (ObjectiveFunc_New[6*nPlane + iPlane] - ObjectiveFunc[6*nPlane + iPlane]) / delta_eps;
+                ObjectiveFunc_New[6*nPlane + iPlane] = geometry_container[ZONE_0]->Compute_MinThickness(Plane_P0[iPlane], Plane_Normal[iPlane], config_container[ZONE_0], Xcoord_Airfoil[iPlane], Ycoord_Airfoil[iPlane], Zcoord_Airfoil[iPlane]);
+                Gradient[6*nPlane + iPlane] = (ObjectiveFunc_New[6*nPlane + iPlane] - ObjectiveFunc[6*nPlane + iPlane]) / delta_eps;
                 
               }
               
@@ -1092,6 +1095,7 @@ int main(int argc, char *argv[]) {
               cout << "LE radius grad.: "            << Gradient[3*nPlane + iPlane] << ". ";
               cout << "ToC grad.: "                  << Gradient[4*nPlane + iPlane] << ". ";
               cout << "Twist angle grad.: "          << Gradient[5*nPlane + iPlane] << ". ";
+              cout << "Thinness grad.: "             << Gradient[6*nPlane + iPlane] << ". ";
             }
           }
         }
@@ -1121,6 +1125,7 @@ int main(int argc, char *argv[]) {
               cout << "LE radius grad.: "            << Gradient[3*nPlane + iPlane] << ". ";
               cout << "ToC grad.: "                  << Gradient[4*nPlane + iPlane] << ". ";
               cout << "Twist angle grad.: "          << Gradient[5*nPlane + iPlane] << ". ";
+              cout << "Thinness grad.: "             << Gradient[6*nPlane + iPlane] << ". ";
             }
           }
         }
@@ -1132,7 +1137,7 @@ int main(int argc, char *argv[]) {
           Gradient_file << "TITLE = \"SU2_GEO Gradient\"" << endl;
           
           if (geometry_container[ZONE_0]->GetnDim() == 2) {
-            Gradient_file << "VARIABLES = \"DESIGN_VARIABLE\",\"AIRFOIL_AREA\",\"AIRFOIL_THICKNESS\",\"AIRFOIL_CHORD\",\"AIRFOIL_LE_RADIUS\",\"AIRFOIL_TOC\",\"AIRFOIL_ALPHA\"";
+            Gradient_file << "VARIABLES = \"DESIGN_VARIABLE\",\"AIRFOIL_AREA\",\"AIRFOIL_THICKNESS\",\"AIRFOIL_CHORD\",\"AIRFOIL_LE_RADIUS\",\"AIRFOIL_TOC\",\"AIRFOIL_ALPHA\",\"AIRFOIL_THINNESS\"";
           }
           else if (geometry_container[ZONE_0]->GetnDim() == 3) {
             
@@ -1205,9 +1210,10 @@ int main(int argc, char *argv[]) {
           if (geometry_container[ZONE_0]->GetnDim() == 3) {
             Gradient_file << Wing_Volume_Grad <<","<< Wing_MinThickness_Grad <<","<< Wing_MaxThickness_Grad <<","<< Wing_MinChord_Grad <<","<< Wing_MaxChord_Grad <<","<< Wing_MinLERadius_Grad <<","<< Wing_MaxLERadius_Grad<<","<< Wing_MinToC_Grad <<","<< Wing_MaxToC_Grad <<","<< Wing_ObjFun_MinToC_Grad <<","<< Wing_MaxTwist_Grad <<","<< Wing_MaxCurvature_Grad <<","<< Wing_MaxDihedral_Grad <<",";
           }
-          for (iPlane = 0; iPlane < nPlane*6; iPlane++) {
+          for (iPlane = 0; iPlane < nPlane*7; iPlane++) {
             Gradient_file << Gradient[iPlane];
-            if (iPlane != (nPlane*6)-1) Gradient_file <<",";
+            cout << Gradient[iPlane] << endl;
+            if (iPlane != (nPlane*7)-1) Gradient_file <<",";
           }
         }
         

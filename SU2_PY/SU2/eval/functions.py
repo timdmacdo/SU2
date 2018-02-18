@@ -110,6 +110,7 @@ def function( func_name, config, state=None ):
             geometry( func_name, config, state )
             
         else:
+            print 'unknown function 1'
             raise Exception('unknown function name, %s' % func_name)
         
     #: if not redundant
@@ -665,6 +666,8 @@ def geometry( func_name, config, state=None ):
     for key in su2io.optnames_geo:
         if key in state['FUNCTIONS']:
             funcs[key] = state['FUNCTIONS'][key]
+    print 'ran through geo'
+    print state['FUNCTIONS']
     return funcs
     
 

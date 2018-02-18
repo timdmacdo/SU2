@@ -16184,7 +16184,7 @@ void CPhysicalGeometry::Compute_Wing(CConfig *config, bool original_surface,
 
   unsigned short iPlane, iDim, nPlane = 0;
   unsigned long iVertex;
-  su2double MinPlane, MaxPlane, dPlane, *Area, *MaxThickness, *ToC, *Chord, *LERadius, *Twist, *Curvature, *Dihedral, SemiSpan;
+  su2double MinPlane, MaxPlane, dPlane, *Area, *MaxThickness, *MinThickness, *ToC, *Chord, *LERadius, *Twist, *Curvature, *Dihedral, SemiSpan;
   vector<su2double> *Xcoord_Airfoil, *Ycoord_Airfoil, *Zcoord_Airfoil, *Variable_Airfoil;
   ofstream Wing_File, Section_File;
   
@@ -16305,6 +16305,8 @@ void CPhysicalGeometry::Compute_Wing(CConfig *config, bool original_surface,
         Area[iPlane] = Compute_Area(Plane_P0[iPlane], Plane_Normal[iPlane], config, Xcoord_Airfoil[iPlane], Ycoord_Airfoil[iPlane], Zcoord_Airfoil[iPlane]);
 
         MaxThickness[iPlane] = Compute_MaxThickness(Plane_P0[iPlane], Plane_Normal[iPlane], config, Xcoord_Airfoil[iPlane], Ycoord_Airfoil[iPlane], Zcoord_Airfoil[iPlane]);
+
+        MinThickness[iPlane] = Compute_MinThickness(Plane_P0[iPlane], Plane_Normal[iPlane], config, Xcoord_Airfoil[iPlane], Ycoord_Airfoil[iPlane], Zcoord_Airfoil[iPlane]);
 
         Chord[iPlane] = Compute_Chord(Plane_P0[iPlane], Plane_Normal[iPlane], Xcoord_Airfoil[iPlane], Ycoord_Airfoil[iPlane], Zcoord_Airfoil[iPlane]);
 
@@ -16765,7 +16767,7 @@ void CPhysicalGeometry::Compute_Nacelle(CConfig *config, bool original_surface,
 
   unsigned short iPlane, iDim, nPlane = 0;
   unsigned long iVertex;
-  su2double Angle, MinAngle, MaxAngle, dAngle, *Area, *MaxThickness, *ToC, *Chord, *LERadius, *Twist;
+  su2double Angle, MinAngle, MaxAngle, dAngle, *Area, *MaxThickness, *MinThickness, *ToC, *Chord, *LERadius, *Twist;
   vector<su2double> *Xcoord_Airfoil, *Ycoord_Airfoil, *Zcoord_Airfoil, *Variable_Airfoil;
   ofstream Nacelle_File, Section_File;
   
@@ -16778,6 +16780,7 @@ void CPhysicalGeometry::Compute_Nacelle(CConfig *config, bool original_surface,
   
   Area = new su2double [nPlane];
   MaxThickness = new su2double [nPlane];
+  MinThickness = new su2double [nPlane];
   Chord = new su2double [nPlane];
   LERadius = new su2double [nPlane];
   ToC = new su2double [nPlane];
@@ -16895,6 +16898,7 @@ void CPhysicalGeometry::Compute_Nacelle(CConfig *config, bool original_surface,
       
       Area[iPlane]                = 0.0;
       MaxThickness[iPlane]        = 0.0;
+      MinThickness[iPlane]        = 0.0;
       Chord[iPlane]               = 0.0;
       LERadius[iPlane]            = 0.0;
       ToC[iPlane]                 = 0.0;
@@ -16907,7 +16911,9 @@ void CPhysicalGeometry::Compute_Nacelle(CConfig *config, bool original_surface,
         Area[iPlane] = Compute_Area(Plane_P0[iPlane], Plane_Normal[iPlane], config, Xcoord_Airfoil[iPlane], Ycoord_Airfoil[iPlane], Zcoord_Airfoil[iPlane]);
         
         MaxThickness[iPlane] = Compute_MaxThickness(Plane_P0[iPlane], Plane_Normal[iPlane], config, Xcoord_Airfoil[iPlane], Ycoord_Airfoil[iPlane], Zcoord_Airfoil[iPlane]);
-        
+
+        MinThickness[iPlane] = Compute_MinThickness(Plane_P0[iPlane], Plane_Normal[iPlane], config, Xcoord_Airfoil[iPlane], Ycoord_Airfoil[iPlane], Zcoord_Airfoil[iPlane]);
+
         Chord[iPlane] = Compute_Chord(Plane_P0[iPlane], Plane_Normal[iPlane], Xcoord_Airfoil[iPlane], Ycoord_Airfoil[iPlane], Zcoord_Airfoil[iPlane]);
         
         Twist[iPlane] = Compute_Twist(Plane_P0[iPlane], Plane_Normal[iPlane], Xcoord_Airfoil[iPlane], Ycoord_Airfoil[iPlane], Zcoord_Airfoil[iPlane]);

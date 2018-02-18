@@ -120,6 +120,7 @@ def gradient( func_name, method, config, state=None ):
                 grads = geometry( func_name, config, state )
 
             else:
+                print 'unknown function 2'
                 raise Exception('unknown function name: %s' % func_name)
 
         # Finite Difference Gradients

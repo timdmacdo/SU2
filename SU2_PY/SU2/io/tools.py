@@ -332,6 +332,7 @@ optnames_multi = [ "MULTIPOINT_LIFT"               ,
 # Geometric Optimizer Function Names
 optnames_geo = [ "AIRFOIL_AREA"                   ,
                  "AIRFOIL_THICKNESS"              ,
+                 "AIRFOIL_THINNESS"               ,
                  "AIRFOIL_CHORD"                  ,
                  "AIRFOIL_LE_RADIUS"              ,
                  "AIRFOIL_TOC"                    ,
