@@ -15496,7 +15496,7 @@ void CPhysicalGeometry::Check_Periodicity(CConfig *config) {
 su2double CPhysicalGeometry::Compute_MinThickness(su2double *Plane_P0, su2double *Plane_Normal, CConfig *config, vector<su2double> &Xcoord_Airfoil, vector<su2double> &Ycoord_Airfoil, vector<su2double> &Zcoord_Airfoil) {
 
   unsigned long iVertex, jVertex, n, Trailing_Point, Leading_Point;
-  su2double Normal[3], Tangent[3], BiNormal[3], auxXCoord, auxYCoord, auxZCoord, zp1, zpn, MinThickness_Value = 0, Thickness, Length, Xcoord_Trailing, Ycoord_Trailing, Zcoord_Trailing, ValCos, ValSin, XValue, ZValue, MaxDistance, Distance, AoA;
+  su2double Normal[3], Tangent[3], BiNormal[3], auxXCoord, auxYCoord, auxZCoord, zp1, zpn, MinThickness_Value = 0, MaxVal, MinVal, Thickness, Length, Xcoord_Trailing, Ycoord_Trailing, Zcoord_Trailing, ValCos, ValSin, XValue, ZValue, MaxDistance, Distance, AoA;
   vector<su2double> Xcoord, Ycoord, Zcoord, Z2coord, Xcoord_Normal, Ycoord_Normal, Zcoord_Normal, Xcoord_Airfoil_, Ycoord_Airfoil_, Zcoord_Airfoil_;
 
   /*--- Find the leading and trailing edges and compute the angle of attack ---*/
@@ -15593,16 +15593,22 @@ su2double CPhysicalGeometry::Compute_MinThickness(su2double *Plane_P0, su2double
     /*--- Compute the thickness (we add a fabs because we can not guarantee the
      right sorting of the points and the upper and/or lower part of the airfoil is not well defined) ---*/
 
+    MaxVal = -100.0;
+    MinVal = 100.0;
     MinThickness_Value = 100.0;
     for (iVertex = 0; iVertex < Xcoord_Airfoil_.size(); iVertex++) {
       if (Zcoord_Normal[iVertex] < 0.0) {
         Thickness = Zcoord_Airfoil_[iVertex] - GetSpline(Xcoord, Zcoord, Z2coord, n, Xcoord_Airfoil_[iVertex]);
         cout << Thickness << endl;
-        if (Thickness < MinThickness_Value) { MinThickness_Value = Thickness; }
+        if (Thickness < MinVal) { MinVal = Thickness; }
+        if (Thickness > MaxVal) { MaxVal = Thickness; }
       }
     }
+    if (fabs(MaxVal) > fabs(MinVal) ) {MinThickness_Value = MinVal;}
+    else {MinThickness_Value = MaxVal;}
   }
   else { MinThickness_Value = 0.0; }
+
 
   cout << "computing min thickness";
 
@@ -15713,7 +15719,7 @@ su2double CPhysicalGeometry::Compute_MaxThickness(su2double *Plane_P0, su2double
     MaxThickness_Value = 0.0;
     for (iVertex = 0; iVertex < Xcoord_Airfoil_.size(); iVertex++) {
       if (Zcoord_Normal[iVertex] < 0.0) {
-        Thickness = Zcoord_Airfoil_[iVertex] - GetSpline(Xcoord, Zcoord, Z2coord, n, Xcoord_Airfoil_[iVertex]);
+        Thickness = fabs(Zcoord_Airfoil_[iVertex] - GetSpline(Xcoord, Zcoord, Z2coord, n, Xcoord_Airfoil_[iVertex]));
         cout << Thickness << endl;
         if (Thickness > MaxThickness_Value) { MaxThickness_Value = Thickness; }
       }
