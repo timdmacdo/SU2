@@ -15498,6 +15498,23 @@ su2double CPhysicalGeometry::Compute_MinThickness(su2double *Plane_P0, su2double
   unsigned long iVertex, jVertex, n, Trailing_Point, Leading_Point;
   su2double Normal[3], Tangent[3], BiNormal[3], auxXCoord, auxYCoord, auxZCoord, zp1, zpn, MinThickness_Value = 0, MaxVal, MinVal, Thickness, Length, Xcoord_Trailing, Ycoord_Trailing, Zcoord_Trailing, ValCos, ValSin, XValue, ZValue, MaxDistance, Distance, AoA;
   vector<su2double> Xcoord, Ycoord, Zcoord, Z2coord, Xcoord_Normal, Ycoord_Normal, Zcoord_Normal, Xcoord_Airfoil_, Ycoord_Airfoil_, Zcoord_Airfoil_;
+  ifstream Airfoil_Bound_File;
+  string AirfoilBounds_FileName, x;
+
+  AirfoilBounds_FileName = config->GetAirfoilBounds_FileName();
+  char *cstr = new char [AirfoilBounds_FileName.size()+1];
+  strcpy (cstr, AirfoilBounds_FileName.c_str());
+
+  cout << "Airfoil file name: " << AirfoilBounds_FileName << endl;
+  Airfoil_Bound_File.open(cstr, ios::in);
+
+  if (!Airfoil_Bound_File) { cout << "Could not open airfoil file! " << endl;}
+
+  while (Airfoil_Bound_File >> x) {
+    cout << x;
+  }
+
+  Airfoil_Bound_File.close();
 
   /*--- Find the leading and trailing edges and compute the angle of attack ---*/
 
@@ -15609,7 +15626,11 @@ su2double CPhysicalGeometry::Compute_MinThickness(su2double *Plane_P0, su2double
   }
   else { MinThickness_Value = 0.0; }
 
-
+  cout << config->GetMesh_FileName() << endl;
+  cout << config->GetAirfoilBounds_FileName() << endl;
+  for (iVertex = 0; iVertex < Xcoord_Airfoil_.size(); iVertex++) {
+      cout << Zcoord_Airfoil[iVertex]<< endl;
+  }
   cout << "computing min thickness";
 
   return MinThickness_Value;

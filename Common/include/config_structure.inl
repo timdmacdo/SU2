@@ -1268,6 +1268,8 @@ inline unsigned short CConfig::GetnObj(void) { return nObj;}
 
 inline string CConfig::GetMesh_FileName(void) { return Mesh_FileName; }
 
+inline string CConfig::GetAirfoilBounds_FileName(void) { return AirfoilBounds_FileName; }
+
 inline string CConfig::GetMesh_Out_FileName(void) { return Mesh_Out_FileName; }
 
 inline unsigned short CConfig::GetMesh_FileFormat(void) { return Mesh_FileFormat; }

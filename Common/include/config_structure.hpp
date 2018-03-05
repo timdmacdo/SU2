@@ -664,6 +664,7 @@ private:
   nRefOriginMoment_Y,           /*!< \brief Number of Y-coordinate moment computation origins. */
   nRefOriginMoment_Z;           /*!< \brief Number of Z-coordinate moment computation origins. */
   string Mesh_FileName,			/*!< \brief Mesh input file. */
+  AirfoilBounds_FileName,
   Mesh_Out_FileName,				/*!< \brief Mesh output file. */
   Solution_FlowFileName,			/*!< \brief Flow solution input file. */
   Solution_LinFileName,			/*!< \brief Linearized flow solution input file. */
@@ -4577,6 +4578,8 @@ public:
    * \return File name of the input grid.
    */
   string GetMesh_FileName(void);
+
+  string GetAirfoilBounds_FileName(void);
   
   /*!
    * \brief Get name of the output grid, this parameter is important for grid
