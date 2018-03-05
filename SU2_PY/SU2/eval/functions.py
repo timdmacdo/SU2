@@ -174,6 +174,7 @@ def aerodynamics( config, state=None ):
     state = su2io.State(state)
     if not 'MESH' in state.FILES:
         state.FILES.MESH = config['MESH_FILENAME']
+    
     special_cases = su2io.get_specialCases(config)
     
     # console output
@@ -606,6 +607,8 @@ def geometry( func_name, config, state=None ):
     state = su2io.State(state)
     if not 'MESH' in state.FILES:
         state.FILES.MESH = config['MESH_FILENAME']
+    if not 'AIRFOIL_BOUNDS' in state.FILES:
+        state.FILES.AIRFOIL_BOUNDS = config['AIRFOIL_BOUNDS']    
     special_cases = su2io.get_specialCases(config)
     
     # console output
@@ -639,6 +642,11 @@ def geometry( func_name, config, state=None ):
         name = files['MESH']
         name = su2io.expand_part(name,config)
         link.extend(name)
+        
+        # files: airfoil bounds
+        name2 = files['AIRFOIL_BOUNDS']
+        name2 = su2io.expand_part(name2,config)
+        link.extend(name2)        
         
         # update function name
         ## TODO
