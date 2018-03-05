@@ -40,6 +40,8 @@
 #include <iomanip>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/types.h>
+#include <dirent.h>
 
 /*--- Epsilon definition ---*/
 
@@ -15505,14 +15507,28 @@ su2double CPhysicalGeometry::Compute_MinThickness(su2double *Plane_P0, su2double
   char *cstr = new char [AirfoilBounds_FileName.size()+1];
   strcpy (cstr, AirfoilBounds_FileName.c_str());
 
+  AirfoilBounds_FileName = "./../../" + AirfoilBounds_FileName;
+
   cout << "Airfoil file name: " << AirfoilBounds_FileName << endl;
+  //cout << AirfoilBounds_FileName.size()+1 << endl;
+  //cout << "cstr: " << cstr << endl;
+  //cout << ".c_str: " << AirfoilBounds_FileName.c_str() << endl;
   Airfoil_Bound_File.open(cstr, ios::in);
+
+  /*DIR* dirp = opendir("../../../");
+  struct dirent * dp;
+  while ((dp = readdir(dirp)) != NULL) {
+      cout << dp->d_name << endl;
+  }
+  closedir(dirp);*/
 
   if (!Airfoil_Bound_File) { cout << "Could not open airfoil file! " << endl;}
 
   while (Airfoil_Bound_File >> x) {
     cout << x;
   }
+
+  getchar();
 
   Airfoil_Bound_File.close();
 
