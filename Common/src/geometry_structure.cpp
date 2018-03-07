@@ -15501,7 +15501,10 @@ su2double CPhysicalGeometry::Compute_MinThickness(su2double *Plane_P0, su2double
   su2double Normal[3], Tangent[3], BiNormal[3], auxXCoord, auxYCoord, auxZCoord, zp1, zpn, MinThickness_Value = 0, MaxVal, MinVal, Thickness, Length, Xcoord_Trailing, Ycoord_Trailing, Zcoord_Trailing, ValCos, ValSin, XValue, ZValue, MaxDistance, Distance, AoA;
   vector<su2double> Xcoord, Ycoord, Zcoord, Z2coord, Xcoord_Normal, Ycoord_Normal, Zcoord_Normal, Xcoord_Airfoil_, Ycoord_Airfoil_, Zcoord_Airfoil_;
   ifstream Airfoil_Bound_File;
-  string AirfoilBounds_FileName, x;
+  string AirfoilBounds_FileName, xs;
+  double x,y,z;
+  su2double auxXBcoord, auxYBcoord, auxZBcoord;
+  vector<su2double> Xcoord_Bounds, Ycoord_Bounds, Zcoord_Bounds, XB_Normal, YB_Normal, ZB_Normal, XBcoord, YBcoord, ZBcoord;
 
   AirfoilBounds_FileName = config->GetAirfoilBounds_FileName();
   char *cstr = new char [AirfoilBounds_FileName.size()+1];
@@ -15509,10 +15512,15 @@ su2double CPhysicalGeometry::Compute_MinThickness(su2double *Plane_P0, su2double
 
   //AirfoilBounds_FileName = "./../../" + AirfoilBounds_FileName;
 
-  cout << "Airfoil file name: " << AirfoilBounds_FileName << endl;
+  cout << "Airfoil bound file name: " << AirfoilBounds_FileName << endl;
   //cout << AirfoilBounds_FileName.size()+1 << endl;
   //cout << "cstr: " << cstr << endl;
   //cout << ".c_str: " << AirfoilBounds_FileName.c_str() << endl;
+  cout <<  Z2coord.size() << endl;
+  for (iVertex = 0; iVertex < Z2coord.size(); iVertex++) {
+        cout << Z2coord[iVertex] << endl;
+  }
+
   Airfoil_Bound_File.open(cstr, ios::in);
 
   /*DIR* dirp = opendir("../../../");
@@ -15524,13 +15532,14 @@ su2double CPhysicalGeometry::Compute_MinThickness(su2double *Plane_P0, su2double
 
   if (!Airfoil_Bound_File) { cout << "Could not open airfoil file! " << endl;}
 
-  while (Airfoil_Bound_File >> x) {
-    cout << x << endl;
+  while (Airfoil_Bound_File >> x >> y >> z ) {
+    //cout << x << ' ' << y << ' ' << z << endl;
+    Xcoord_Bounds.push_back(x);
+    Ycoord_Bounds.push_back(y);
+    Zcoord_Bounds.push_back(z);
   }
 
   Airfoil_Bound_File.close();
-
-  getchar();
 
   /*--- Find the leading and trailing edges and compute the angle of attack ---*/
 
@@ -15569,7 +15578,7 @@ su2double CPhysicalGeometry::Compute_MinThickness(su2double *Plane_P0, su2double
     Zcoord_Airfoil_[iVertex] = ZValue*ValCos + XValue*ValSin;
   }
 
-  /*--- Identify upper and lower side, and store the value of the normal --*/
+  /*--- Identify upper and lower side for main airfoil, and store the value of the normal --*/
 
   for (iVertex = 1; iVertex < Xcoord_Airfoil_.size(); iVertex++) {
     Tangent[0] = Xcoord_Airfoil_[iVertex] - Xcoord_Airfoil_[iVertex-1];
@@ -15604,6 +15613,41 @@ su2double CPhysicalGeometry::Compute_MinThickness(su2double *Plane_P0, su2double
 
   }
 
+  /*--- Identify upper and lower side for bounding airfoil, and store the value of the normal --*/
+
+  for (iVertex = 1; iVertex < Xcoord_Bounds.size(); iVertex++) {
+    Tangent[0] = Xcoord_Bounds[iVertex] - Xcoord_Bounds[iVertex-1];
+    Tangent[1] = Ycoord_Bounds[iVertex] - Ycoord_Bounds[iVertex-1];
+    Tangent[2] = Zcoord_Bounds[iVertex] - Zcoord_Bounds[iVertex-1];
+    Length = sqrt(pow(Tangent[0], 2.0) + pow(Tangent[1], 2.0) + pow(Tangent[2], 2.0));
+
+    Tangent[0] /= Length; Tangent[1] /= Length; Tangent[2] /= Length;
+
+    BiNormal[0] = Plane_Normal[0];
+    BiNormal[1] = Plane_Normal[1];
+    BiNormal[2] = Plane_Normal[2];
+    Length = sqrt(pow(BiNormal[0], 2.0) + pow(BiNormal[1], 2.0) + pow(BiNormal[2], 2.0));
+    BiNormal[0] /= Length; BiNormal[1] /= Length; BiNormal[2] /= Length;
+
+    Normal[0] = Tangent[1]*BiNormal[2] - Tangent[2]*BiNormal[1];
+    Normal[1] = Tangent[2]*BiNormal[0] - Tangent[0]*BiNormal[2];
+    Normal[2] = Tangent[0]*BiNormal[1] - Tangent[1]*BiNormal[0];
+
+    XB_Normal.push_back(Normal[0]); YB_Normal.push_back(Normal[1]); ZB_Normal.push_back(Normal[2]);
+
+    unsigned short index = 2;
+
+    /*--- Removing the trailing edge from list of points that we are going to use in the interpolation,
+            to be sure that a blunt trailing edge do not affect the interpolation ---*/
+
+    if ((Normal[index] >= 0.0) && (fabs(Xcoord_Bounds[iVertex]) > MaxDistance*0.01)) {
+      XBcoord.push_back(Xcoord_Bounds[iVertex]);
+      YBcoord.push_back(Ycoord_Bounds[iVertex]);
+      ZBcoord.push_back(Zcoord_Bounds[iVertex]);
+    }
+
+  }
+
   /*--- Order the arrays using the X component ---*/
 
   for (iVertex = 0; iVertex < Xcoord.size(); iVertex++) {
@@ -15616,12 +15660,28 @@ su2double CPhysicalGeometry::Compute_MinThickness(su2double *Plane_P0, su2double
     }
   }
 
+  /*--- (Bounds) Order the arrays using the X component ---*/
+
+  for (iVertex = 0; iVertex < XBcoord.size(); iVertex++) {
+    for (jVertex = 0; jVertex < XBcoord.size() - 1 - iVertex; jVertex++) {
+      if (XBcoord[jVertex] > XBcoord[jVertex+1]) {
+        auxXBcoord = XBcoord[jVertex]; XBcoord[jVertex] = XBcoord[jVertex+1]; XBcoord[jVertex+1] = auxXBcoord;
+        auxYBcoord = YBcoord[jVertex]; YBcoord[jVertex] = YBcoord[jVertex+1]; YBcoord[jVertex+1] = auxYBcoord;
+        auxZBcoord = ZBcoord[jVertex]; ZBcoord[jVertex] = ZBcoord[jVertex+1]; ZBcoord[jVertex+1] = auxZBcoord;
+      }
+    }
+  }
+
   n = Xcoord.size();
   if (n > 1) {
     zp1 = (Zcoord[1]-Zcoord[0])/(Xcoord[1]-Xcoord[0]);
     zpn = (Zcoord[n-1]-Zcoord[n-2])/(Xcoord[n-1]-Xcoord[n-2]);
     Z2coord.resize(n+1);
     SetSpline(Xcoord, Zcoord, n, zp1, zpn, Z2coord);
+    cout << "Spline set Z2coord size: " << Z2coord.size() << endl;
+    for (iVertex = 0; iVertex < Z2coord.size(); iVertex++) {
+          cout << Z2coord[iVertex] << endl;
+    }
 
     /*--- Compute the thickness (we add a fabs because we can not guarantee the
      right sorting of the points and the upper and/or lower part of the airfoil is not well defined) ---*/
@@ -15632,7 +15692,7 @@ su2double CPhysicalGeometry::Compute_MinThickness(su2double *Plane_P0, su2double
     for (iVertex = 0; iVertex < Xcoord_Airfoil_.size(); iVertex++) {
       if (Zcoord_Normal[iVertex] < 0.0) {
         Thickness = Zcoord_Airfoil_[iVertex] - GetSpline(Xcoord, Zcoord, Z2coord, n, Xcoord_Airfoil_[iVertex]);
-        cout << Thickness << endl;
+        //cout << Thickness << endl;
         if (Thickness < MinVal) { MinVal = Thickness; }
         if (Thickness > MaxVal) { MaxVal = Thickness; }
       }
@@ -15645,9 +15705,11 @@ su2double CPhysicalGeometry::Compute_MinThickness(su2double *Plane_P0, su2double
   cout << config->GetMesh_FileName() << endl;
   cout << config->GetAirfoilBounds_FileName() << endl;
   for (iVertex = 0; iVertex < Xcoord_Airfoil_.size(); iVertex++) {
-      cout << Zcoord_Airfoil[iVertex]<< endl;
+      //cout << Zcoord_Airfoil[iVertex]<< endl;
   }
   cout << "computing min thickness";
+
+  getchar();
 
   return MinThickness_Value;
 
@@ -15757,14 +15819,14 @@ su2double CPhysicalGeometry::Compute_MaxThickness(su2double *Plane_P0, su2double
     for (iVertex = 0; iVertex < Xcoord_Airfoil_.size(); iVertex++) {
       if (Zcoord_Normal[iVertex] < 0.0) {
         Thickness = fabs(Zcoord_Airfoil_[iVertex] - GetSpline(Xcoord, Zcoord, Z2coord, n, Xcoord_Airfoil_[iVertex]));
-        cout << Thickness << endl;
+        //cout << Thickness << endl;
         if (Thickness > MaxThickness_Value) { MaxThickness_Value = Thickness; }
       }
     }
   }
   else { MaxThickness_Value = 0.0; }
 
-  cout << "computing max thickness";
+  //cout << "computing max thickness";
 
   return MaxThickness_Value;
   
