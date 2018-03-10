@@ -15498,13 +15498,21 @@ void CPhysicalGeometry::Check_Periodicity(CConfig *config) {
 su2double CPhysicalGeometry::Compute_MinThickness(su2double *Plane_P0, su2double *Plane_Normal, CConfig *config, vector<su2double> &Xcoord_Airfoil, vector<su2double> &Ycoord_Airfoil, vector<su2double> &Zcoord_Airfoil) {
 
   unsigned long iVertex, jVertex, n, Trailing_Point, Leading_Point;
-  su2double Normal[3], Tangent[3], BiNormal[3], auxXCoord, auxYCoord, auxZCoord, zp1, zpn, MinThickness_Value = 0, MaxVal, MinVal, Thickness, Length, Xcoord_Trailing, Ycoord_Trailing, Zcoord_Trailing, ValCos, ValSin, XValue, ZValue, MaxDistance, Distance, AoA;
+  su2double Normal[3], Tangent[3], BiNormal[3], auxXCoord, auxYCoord, auxZCoord, zp1, zpn, MinThickness_Value = 0, MaxVal, MinVal, Length, Xcoord_Trailing, Ycoord_Trailing, Zcoord_Trailing, ValCos, ValSin, XValue, ZValue, MaxDistance, Distance, AoA;
   vector<su2double> Xcoord, Ycoord, Zcoord, Z2coord, Xcoord_Normal, Ycoord_Normal, Zcoord_Normal, Xcoord_Airfoil_, Ycoord_Airfoil_, Zcoord_Airfoil_;
   ifstream Airfoil_Bound_File;
   string AirfoilBounds_FileName, xs;
   double x,y,z;
   su2double auxXBcoord, auxYBcoord, auxZBcoord;
-  vector<su2double> Xcoord_Bounds, Ycoord_Bounds, Zcoord_Bounds, XB_Normal, YB_Normal, ZB_Normal, XBcoord, YBcoord, ZBcoord;
+  vector<su2double> Xcoord_Bounds, Ycoord_Bounds, Zcoord_Bounds, XB_Normal, YB_Normal, ZB_Normal, XBcoord, YBcoord, ZBcoord, Z2Bcoord, Thicknesses, BThicknesses;
+
+  Z2Bcoord = Z2coord;
+
+  cout << "Airfoil Initial Coordinates: " << endl;
+  for (iVertex = 0; iVertex < Xcoord_Airfoil.size(); iVertex++) {
+      cout << Xcoord_Airfoil[iVertex] << ", " << Ycoord_Airfoil[iVertex] << ", " << Zcoord_Airfoil[iVertex] << ", " << endl;
+  }
+  cout << endl;
 
   AirfoilBounds_FileName = config->GetAirfoilBounds_FileName();
   char *cstr = new char [AirfoilBounds_FileName.size()+1];
@@ -15613,6 +15621,12 @@ su2double CPhysicalGeometry::Compute_MinThickness(su2double *Plane_P0, su2double
 
   }
 
+  cout << "Airfoil Normals: " << endl;
+  for (iVertex = 0; iVertex < Xcoord.size(); iVertex++) {
+      cout << Zcoord_Normal[iVertex] << endl;
+  }
+
+
   /*--- Identify upper and lower side for bounding airfoil, and store the value of the normal --*/
 
   for (iVertex = 1; iVertex < Xcoord_Bounds.size(); iVertex++) {
@@ -15648,6 +15662,11 @@ su2double CPhysicalGeometry::Compute_MinThickness(su2double *Plane_P0, su2double
 
   }
 
+  cout << "Bound Normals: " << endl;
+  for (iVertex = 0; iVertex < Xcoord.size(); iVertex++) {
+      cout << ZB_Normal[iVertex] << endl;
+  }
+
   /*--- Order the arrays using the X component ---*/
 
   for (iVertex = 0; iVertex < Xcoord.size(); iVertex++) {
@@ -15672,6 +15691,14 @@ su2double CPhysicalGeometry::Compute_MinThickness(su2double *Plane_P0, su2double
     }
   }
 
+  /*----- Regular Thickness Calculation -----*/
+
+  cout << "Airfoil Coordinates: " << endl;
+  for (iVertex = 0; iVertex < Xcoord.size(); iVertex++) {
+      cout << Xcoord[iVertex] << " " << Ycoord[iVertex] << " " << Zcoord[iVertex] << " " << endl;
+  }
+  //cout << endl;
+
   n = Xcoord.size();
   if (n > 1) {
     zp1 = (Zcoord[1]-Zcoord[0])/(Xcoord[1]-Xcoord[0]);
@@ -15680,8 +15707,9 @@ su2double CPhysicalGeometry::Compute_MinThickness(su2double *Plane_P0, su2double
     SetSpline(Xcoord, Zcoord, n, zp1, zpn, Z2coord);
     cout << "Spline set Z2coord size: " << Z2coord.size() << endl;
     for (iVertex = 0; iVertex < Z2coord.size(); iVertex++) {
-          cout << Z2coord[iVertex] << endl;
+          cout << Z2coord[iVertex] << ", ";
     }
+    cout << endl;
 
     /*--- Compute the thickness (we add a fabs because we can not guarantee the
      right sorting of the points and the upper and/or lower part of the airfoil is not well defined) ---*/
@@ -15691,16 +15719,68 @@ su2double CPhysicalGeometry::Compute_MinThickness(su2double *Plane_P0, su2double
     MinThickness_Value = 100.0;
     for (iVertex = 0; iVertex < Xcoord_Airfoil_.size(); iVertex++) {
       if (Zcoord_Normal[iVertex] < 0.0) {
-        Thickness = Zcoord_Airfoil_[iVertex] - GetSpline(Xcoord, Zcoord, Z2coord, n, Xcoord_Airfoil_[iVertex]);
+        Thicknesses.push_back(fabs(Zcoord_Airfoil_[iVertex] - GetSpline(Xcoord, Zcoord, Z2coord, n, Xcoord_Airfoil_[iVertex])));
         //cout << Thickness << endl;
-        if (Thickness < MinVal) { MinVal = Thickness; }
-        if (Thickness > MaxVal) { MaxVal = Thickness; }
+        //if (Thickness < MinVal) { MinVal = Thickness; }
+        //if (Thickness > MaxVal) { MaxVal = Thickness; }
       }
     }
-    if (fabs(MaxVal) > fabs(MinVal) ) {MinThickness_Value = MinVal;}
-    else {MinThickness_Value = MaxVal;}
+    //if (fabs(MaxVal) > fabs(MinVal) ) {MinThickness_Value = MinVal;}
+    //else {MinThickness_Value = MaxVal;}
   }
   else { MinThickness_Value = 0.0; }
+
+
+  /*----- Bound Thickness Calculation -----*/
+
+  cout << "Airfoil Bound Coordinates: " << endl;
+  for (iVertex = 0; iVertex < XBcoord.size(); iVertex++) {
+      cout << XBcoord[iVertex] << ", " << YBcoord[iVertex] << ", " << ZBcoord[iVertex] << ", " << endl;
+  }
+  cout << endl;
+
+  n = XBcoord.size();
+  if (n > 1) {
+    zp1 = (ZBcoord[1]-ZBcoord[0])/(XBcoord[1]-XBcoord[0]);
+    zpn = (ZBcoord[n-1]-ZBcoord[n-2])/(XBcoord[n-1]-XBcoord[n-2]);
+    Z2Bcoord.resize(n+1);
+    SetSpline(XBcoord, ZBcoord, n, zp1, zpn, Z2Bcoord);
+    cout << "Spline set Z2Bcoord size: " << Z2Bcoord.size() << endl;
+    for (iVertex = 0; iVertex < Z2Bcoord.size(); iVertex++) {
+          cout << Z2Bcoord[iVertex] << ", ";
+    }
+    cout << endl;
+
+    /*--- Compute the thickness (we add a fabs because we can not guarantee the
+     right sorting of the points and the upper and/or lower part of the airfoil is not well defined) ---*/
+
+    MaxVal = -100.0;
+    MinVal = 100.0;
+    MinThickness_Value = 100.0;
+    for (iVertex = 0; iVertex < XBcoord.size(); iVertex++) {
+      if (ZB_Normal[iVertex] < 0.0) {
+        BThicknesses.push_back(fabs(ZBcoord[iVertex]));// - GetSpline(XBcoord, ZBcoord, Z2Bcoord, n, XBcoord[iVertex])));
+        //cout << Thickness << endl;
+        //if (Thickness < MinVal) { MinVal = Thickness; }
+        //if (Thickness > MaxVal) { MaxVal = Thickness; }
+      }
+    }
+    //if (fabs(MaxVal) > fabs(MinVal) ) {MinThickness_Value = MinVal;}
+    //else {MinThickness_Value = MaxVal;}
+  }
+  else { MinThickness_Value = 0.0; }
+
+  cout << "Base Thicknesses: " << endl;
+  for (iVertex = 0; iVertex < XBcoord.size(); iVertex++) {
+      cout << Thicknesses[iVertex] << ", ";
+  }
+  cout << endl;
+
+  cout << "Bound Thicknesses: " << endl;
+  for (iVertex = 0; iVertex < XBcoord.size(); iVertex++) {
+      cout << BThicknesses[iVertex] << ", ";
+  }
+  cout << endl;
 
   cout << config->GetMesh_FileName() << endl;
   cout << config->GetAirfoilBounds_FileName() << endl;
