@@ -65,6 +65,133 @@
 (dest)[1] = (v1)[1] - (v2)[1];	\
 (dest)[2] = (v1)[2] - (v2)[2];
 
+std::vector<su2double> GetThicknessVector(su2double *Plane_Normal, vector<su2double> &Xcoord_Airfoil, vector<su2double> &Ycoord_Airfoil, vector<su2double> &Zcoord_Airfoil){
+    unsigned long iVertex, jVertex, n, Trailing_Point, Leading_Point;
+    su2double Normal[3], Tangent[3], BiNormal[3], auxXCoord, auxYCoord, auxZCoord, zp1, zpn, MinThickness_Value = 0, MaxVal, MinVal, Length, Xcoord_Trailing, Ycoord_Trailing, Zcoord_Trailing, ValCos, ValSin, XValue, ZValue, MaxDistance, Distance, AoA;
+    vector<su2double> Xcoord, Ycoord, Zcoord, Z2coord, Xcoord_Normal, Ycoord_Normal, Zcoord_Normal, Xcoord_Airfoil_, Ycoord_Airfoil_, Zcoord_Airfoil_,Thicknesses;
+
+    /*--- Find the leading and trailing edges and compute the angle of attack ---*/
+
+    MaxDistance = 0.0; Trailing_Point = 0; Leading_Point = 0;
+    for (iVertex = 1; iVertex < Xcoord_Airfoil.size(); iVertex++) {
+      Distance = sqrt(pow(Xcoord_Airfoil[iVertex] - Xcoord_Airfoil[Trailing_Point], 2.0) +
+                      pow(Ycoord_Airfoil[iVertex] - Ycoord_Airfoil[Trailing_Point], 2.0) +
+                      pow(Zcoord_Airfoil[iVertex] - Zcoord_Airfoil[Trailing_Point], 2.0));
+
+      if (MaxDistance < Distance) { MaxDistance = Distance; Leading_Point = iVertex; }
+    }
+
+    AoA = atan((Zcoord_Airfoil[Leading_Point] - Zcoord_Airfoil[Trailing_Point]) / (Xcoord_Airfoil[Trailing_Point] - Xcoord_Airfoil[Leading_Point]))*180/PI_NUMBER;
+
+    /*--- Translate to the origin ---*/
+
+    Xcoord_Trailing = Xcoord_Airfoil[0];
+    Ycoord_Trailing = Ycoord_Airfoil[0];
+    Zcoord_Trailing = Zcoord_Airfoil[0];
+
+    for (iVertex = 0; iVertex < Xcoord_Airfoil.size(); iVertex++) {
+      Xcoord_Airfoil_.push_back(Xcoord_Airfoil[iVertex] - Xcoord_Trailing);
+      Ycoord_Airfoil_.push_back(Ycoord_Airfoil[iVertex] - Ycoord_Trailing);
+      Zcoord_Airfoil_.push_back(Zcoord_Airfoil[iVertex] - Zcoord_Trailing);
+    }
+
+    /*--- Rotate the airfoil ---*/
+
+    ValCos = cos(AoA*PI_NUMBER/180.0);
+    ValSin = sin(AoA*PI_NUMBER/180.0);
+
+    for (iVertex = 0; iVertex < Xcoord_Airfoil.size(); iVertex++) {
+      XValue = Xcoord_Airfoil_[iVertex];
+      ZValue = Zcoord_Airfoil_[iVertex];
+      Xcoord_Airfoil_[iVertex] = XValue*ValCos - ZValue*ValSin;
+      Zcoord_Airfoil_[iVertex] = ZValue*ValCos + XValue*ValSin;
+    }
+
+    /*--- Identify upper and lower side for main airfoil, and store the value of the normal --*/
+
+    for (iVertex = 1; iVertex < Xcoord_Airfoil_.size(); iVertex++) {
+      Tangent[0] = Xcoord_Airfoil_[iVertex] - Xcoord_Airfoil_[iVertex-1];
+      Tangent[1] = Ycoord_Airfoil_[iVertex] - Ycoord_Airfoil_[iVertex-1];
+      Tangent[2] = Zcoord_Airfoil_[iVertex] - Zcoord_Airfoil_[iVertex-1];
+      Length = sqrt(pow(Tangent[0], 2.0) + pow(Tangent[1], 2.0) + pow(Tangent[2], 2.0));
+
+      Tangent[0] /= Length; Tangent[1] /= Length; Tangent[2] /= Length;
+
+      BiNormal[0] = Plane_Normal[0];
+      BiNormal[1] = Plane_Normal[1];
+      BiNormal[2] = Plane_Normal[2];
+      Length = sqrt(pow(BiNormal[0], 2.0) + pow(BiNormal[1], 2.0) + pow(BiNormal[2], 2.0));
+      BiNormal[0] /= Length; BiNormal[1] /= Length; BiNormal[2] /= Length;
+
+      Normal[0] = Tangent[1]*BiNormal[2] - Tangent[2]*BiNormal[1];
+      Normal[1] = Tangent[2]*BiNormal[0] - Tangent[0]*BiNormal[2];
+      Normal[2] = Tangent[0]*BiNormal[1] - Tangent[1]*BiNormal[0];
+
+      Xcoord_Normal.push_back(Normal[0]); Ycoord_Normal.push_back(Normal[1]); Zcoord_Normal.push_back(Normal[2]);
+
+      unsigned short index = 2;
+
+      /*--- Removing the trailing edge from list of points that we are going to use in the interpolation,
+              to be sure that a blunt trailing edge do not affect the interpolation ---*/
+
+      // This if statement only checks the final point
+      if ((Normal[index] >= 0.0) && (fabs(Xcoord_Airfoil_[iVertex]) > MaxDistance*0.01)) {
+        Xcoord.push_back(Xcoord_Airfoil_[iVertex]);
+        Ycoord.push_back(Ycoord_Airfoil_[iVertex]);
+        Zcoord.push_back(Zcoord_Airfoil_[iVertex]);
+      }
+
+    }
+
+    /*--- Order the arrays using the X component ---*/
+
+    for (iVertex = 0; iVertex < Xcoord.size(); iVertex++) {
+      for (jVertex = 0; jVertex < Xcoord.size() - 1 - iVertex; jVertex++) {
+        if (Xcoord[jVertex] > Xcoord[jVertex+1]) {
+          auxXCoord = Xcoord[jVertex]; Xcoord[jVertex] = Xcoord[jVertex+1]; Xcoord[jVertex+1] = auxXCoord;
+          auxYCoord = Ycoord[jVertex]; Ycoord[jVertex] = Ycoord[jVertex+1]; Ycoord[jVertex+1] = auxYCoord;
+          auxZCoord = Zcoord[jVertex]; Zcoord[jVertex] = Zcoord[jVertex+1]; Zcoord[jVertex+1] = auxZCoord;
+        }
+      }
+    }
+
+    /*----- Regular Thickness Calculation -----*/
+
+    n = Xcoord.size();
+    if (n > 1) {
+      zp1 = (Zcoord[1]-Zcoord[0])/(Xcoord[1]-Xcoord[0]);
+      zpn = (Zcoord[n-1]-Zcoord[n-2])/(Xcoord[n-1]-Xcoord[n-2]);
+      Z2coord.resize(n+1);
+      SetSpline(Xcoord, Zcoord, n, zp1, zpn, Z2coord);
+      cout << "Spline set Z2coord size: " << Z2coord.size() << endl;
+      for (iVertex = 0; iVertex < Z2coord.size(); iVertex++) {
+            cout << Z2coord[iVertex] << ", ";
+      }
+      cout << endl;
+
+      /*--- Compute the thickness (we add a fabs because we can not guarantee the
+       right sorting of the points and the upper and/or lower part of the airfoil is not well defined) ---*/
+
+      MaxVal = -100.0;
+      MinVal = 100.0;
+      MinThickness_Value = 100.0;
+      for (iVertex = 0; iVertex < Xcoord_Airfoil_.size(); iVertex++) {
+        if (Zcoord_Normal[iVertex] < 0.0) {
+          Thicknesses.push_back(fabs(Zcoord_Airfoil_[iVertex] - GetSpline(Xcoord, Zcoord, Z2coord, n, Xcoord_Airfoil_[iVertex])));
+          //cout << Thickness << endl;
+          //if (Thickness < MinVal) { MinVal = Thickness; }
+          //if (Thickness > MaxVal) { MaxVal = Thickness; }
+        }
+      }
+      //if (fabs(MaxVal) > fabs(MinVal) ) {MinThickness_Value = MinVal;}
+      //else {MinThickness_Value = MaxVal;}
+    }
+    else { MinThickness_Value = 0.0; }
+
+    return Thicknesses;
+
+  }
+
 CGeometry::CGeometry(void) {
   
   size = SU2_MPI::GetSize();
@@ -15497,16 +15624,16 @@ void CPhysicalGeometry::Check_Periodicity(CConfig *config) {
 
 su2double CPhysicalGeometry::Compute_MinThickness(su2double *Plane_P0, su2double *Plane_Normal, CConfig *config, vector<su2double> &Xcoord_Airfoil, vector<su2double> &Ycoord_Airfoil, vector<su2double> &Zcoord_Airfoil) {
 
-  unsigned long iVertex, jVertex, n, Trailing_Point, Leading_Point;
-  su2double Normal[3], Tangent[3], BiNormal[3], auxXCoord, auxYCoord, auxZCoord, zp1, zpn, MinThickness_Value = 0, MaxVal, MinVal, Length, Xcoord_Trailing, Ycoord_Trailing, Zcoord_Trailing, ValCos, ValSin, XValue, ZValue, MaxDistance, Distance, AoA;
-  vector<su2double> Xcoord, Ycoord, Zcoord, Z2coord, Xcoord_Normal, Ycoord_Normal, Zcoord_Normal, Xcoord_Airfoil_, Ycoord_Airfoil_, Zcoord_Airfoil_;
-  ifstream Airfoil_Bound_File;
-  string AirfoilBounds_FileName, xs;
-  double x,y,z;
-  su2double auxXBcoord, auxYBcoord, auxZBcoord;
-  vector<su2double> Xcoord_Bounds, Ycoord_Bounds, Zcoord_Bounds, XB_Normal, YB_Normal, ZB_Normal, XBcoord, YBcoord, ZBcoord, Z2Bcoord, Thicknesses, BThicknesses;
+  std::vector<su2double> Airfoil_Thickness = GetThicknessVector(Plane_Normal, Xcoord_Airfoil, Ycoord_Airfoil, Zcoord_Airfoil);
 
-  Z2Bcoord = Z2coord;
+  unsigned long iVertex;
+  su2double MinThickness_Value = 0;
+  ifstream Airfoil_Bound_File;
+  string AirfoilBounds_FileName;
+  double x,y,z;
+  // File input copy
+  vector<su2double> Xcoord_Airfoil_B, Ycoord_Airfoil_B, Zcoord_Airfoil_B;
+  // Variable copies
 
   cout << "Airfoil Initial Coordinates: " << endl;
   for (iVertex = 0; iVertex < Xcoord_Airfoil.size(); iVertex++) {
@@ -15524,10 +15651,6 @@ su2double CPhysicalGeometry::Compute_MinThickness(su2double *Plane_P0, su2double
   //cout << AirfoilBounds_FileName.size()+1 << endl;
   //cout << "cstr: " << cstr << endl;
   //cout << ".c_str: " << AirfoilBounds_FileName.c_str() << endl;
-  cout <<  Z2coord.size() << endl;
-  for (iVertex = 0; iVertex < Z2coord.size(); iVertex++) {
-        cout << Z2coord[iVertex] << endl;
-  }
 
   Airfoil_Bound_File.open(cstr, ios::in);
 
@@ -15542,252 +15665,18 @@ su2double CPhysicalGeometry::Compute_MinThickness(su2double *Plane_P0, su2double
 
   while (Airfoil_Bound_File >> x >> y >> z ) {
     //cout << x << ' ' << y << ' ' << z << endl;
-    Xcoord_Bounds.push_back(x);
-    Ycoord_Bounds.push_back(y);
-    Zcoord_Bounds.push_back(z);
+    Xcoord_Airfoil_B.push_back(x);
+    Ycoord_Airfoil_B.push_back(y);
+    Zcoord_Airfoil_B.push_back(z);
   }
 
   Airfoil_Bound_File.close();
 
-  /*--- Find the leading and trailing edges and compute the angle of attack ---*/
+  std::vector<su2double> Airfoil_Thickness_B = GetThicknessVector(Plane_Normal, Xcoord_Airfoil, Ycoord_Airfoil, Zcoord_Airfoil);
 
-  MaxDistance = 0.0; Trailing_Point = 0; Leading_Point = 0;
-  for (iVertex = 1; iVertex < Xcoord_Airfoil.size(); iVertex++) {
-    Distance = sqrt(pow(Xcoord_Airfoil[iVertex] - Xcoord_Airfoil[Trailing_Point], 2.0) +
-                    pow(Ycoord_Airfoil[iVertex] - Ycoord_Airfoil[Trailing_Point], 2.0) +
-                    pow(Zcoord_Airfoil[iVertex] - Zcoord_Airfoil[Trailing_Point], 2.0));
-
-    if (MaxDistance < Distance) { MaxDistance = Distance; Leading_Point = iVertex; }
+  for (int index = 0; index < Airfoil_Thickness.size(); index++){
+      cout << Airfoil_Thickness[index] << endl;
   }
-
-  AoA = atan((Zcoord_Airfoil[Leading_Point] - Zcoord_Airfoil[Trailing_Point]) / (Xcoord_Airfoil[Trailing_Point] - Xcoord_Airfoil[Leading_Point]))*180/PI_NUMBER;
-
-  /*--- Translate to the origin ---*/
-
-  Xcoord_Trailing = Xcoord_Airfoil[0];
-  Ycoord_Trailing = Ycoord_Airfoil[0];
-  Zcoord_Trailing = Zcoord_Airfoil[0];
-
-  for (iVertex = 0; iVertex < Xcoord_Airfoil.size(); iVertex++) {
-    Xcoord_Airfoil_.push_back(Xcoord_Airfoil[iVertex] - Xcoord_Trailing);
-    Ycoord_Airfoil_.push_back(Ycoord_Airfoil[iVertex] - Ycoord_Trailing);
-    Zcoord_Airfoil_.push_back(Zcoord_Airfoil[iVertex] - Zcoord_Trailing);
-  }
-
-  /*--- Rotate the airfoil ---*/
-
-  ValCos = cos(AoA*PI_NUMBER/180.0);
-  ValSin = sin(AoA*PI_NUMBER/180.0);
-
-  for (iVertex = 0; iVertex < Xcoord_Airfoil.size(); iVertex++) {
-    XValue = Xcoord_Airfoil_[iVertex];
-    ZValue = Zcoord_Airfoil_[iVertex];
-    Xcoord_Airfoil_[iVertex] = XValue*ValCos - ZValue*ValSin;
-    Zcoord_Airfoil_[iVertex] = ZValue*ValCos + XValue*ValSin;
-  }
-
-  /*--- Identify upper and lower side for main airfoil, and store the value of the normal --*/
-
-  for (iVertex = 1; iVertex < Xcoord_Airfoil_.size(); iVertex++) {
-    Tangent[0] = Xcoord_Airfoil_[iVertex] - Xcoord_Airfoil_[iVertex-1];
-    Tangent[1] = Ycoord_Airfoil_[iVertex] - Ycoord_Airfoil_[iVertex-1];
-    Tangent[2] = Zcoord_Airfoil_[iVertex] - Zcoord_Airfoil_[iVertex-1];
-    Length = sqrt(pow(Tangent[0], 2.0) + pow(Tangent[1], 2.0) + pow(Tangent[2], 2.0));
-
-    Tangent[0] /= Length; Tangent[1] /= Length; Tangent[2] /= Length;
-
-    BiNormal[0] = Plane_Normal[0];
-    BiNormal[1] = Plane_Normal[1];
-    BiNormal[2] = Plane_Normal[2];
-    Length = sqrt(pow(BiNormal[0], 2.0) + pow(BiNormal[1], 2.0) + pow(BiNormal[2], 2.0));
-    BiNormal[0] /= Length; BiNormal[1] /= Length; BiNormal[2] /= Length;
-
-    Normal[0] = Tangent[1]*BiNormal[2] - Tangent[2]*BiNormal[1];
-    Normal[1] = Tangent[2]*BiNormal[0] - Tangent[0]*BiNormal[2];
-    Normal[2] = Tangent[0]*BiNormal[1] - Tangent[1]*BiNormal[0];
-
-    Xcoord_Normal.push_back(Normal[0]); Ycoord_Normal.push_back(Normal[1]); Zcoord_Normal.push_back(Normal[2]);
-
-    unsigned short index = 2;
-
-    /*--- Removing the trailing edge from list of points that we are going to use in the interpolation,
-			to be sure that a blunt trailing edge do not affect the interpolation ---*/
-
-    if ((Normal[index] >= 0.0) && (fabs(Xcoord_Airfoil_[iVertex]) > MaxDistance*0.01)) {
-      Xcoord.push_back(Xcoord_Airfoil_[iVertex]);
-      Ycoord.push_back(Ycoord_Airfoil_[iVertex]);
-      Zcoord.push_back(Zcoord_Airfoil_[iVertex]);
-    }
-
-  }
-
-  cout << "Airfoil Normals: " << endl;
-  for (iVertex = 0; iVertex < Xcoord.size(); iVertex++) {
-      cout << Zcoord_Normal[iVertex] << endl;
-  }
-
-
-  /*--- Identify upper and lower side for bounding airfoil, and store the value of the normal --*/
-
-  for (iVertex = 1; iVertex < Xcoord_Bounds.size(); iVertex++) {
-    Tangent[0] = Xcoord_Bounds[iVertex] - Xcoord_Bounds[iVertex-1];
-    Tangent[1] = Ycoord_Bounds[iVertex] - Ycoord_Bounds[iVertex-1];
-    Tangent[2] = Zcoord_Bounds[iVertex] - Zcoord_Bounds[iVertex-1];
-    Length = sqrt(pow(Tangent[0], 2.0) + pow(Tangent[1], 2.0) + pow(Tangent[2], 2.0));
-
-    Tangent[0] /= Length; Tangent[1] /= Length; Tangent[2] /= Length;
-
-    BiNormal[0] = Plane_Normal[0];
-    BiNormal[1] = Plane_Normal[1];
-    BiNormal[2] = Plane_Normal[2];
-    Length = sqrt(pow(BiNormal[0], 2.0) + pow(BiNormal[1], 2.0) + pow(BiNormal[2], 2.0));
-    BiNormal[0] /= Length; BiNormal[1] /= Length; BiNormal[2] /= Length;
-
-    Normal[0] = Tangent[1]*BiNormal[2] - Tangent[2]*BiNormal[1];
-    Normal[1] = Tangent[2]*BiNormal[0] - Tangent[0]*BiNormal[2];
-    Normal[2] = Tangent[0]*BiNormal[1] - Tangent[1]*BiNormal[0];
-
-    XB_Normal.push_back(Normal[0]); YB_Normal.push_back(Normal[1]); ZB_Normal.push_back(Normal[2]);
-
-    unsigned short index = 2;
-
-    /*--- Removing the trailing edge from list of points that we are going to use in the interpolation,
-            to be sure that a blunt trailing edge do not affect the interpolation ---*/
-
-    if ((Normal[index] >= 0.0) && (fabs(Xcoord_Bounds[iVertex]) > MaxDistance*0.01)) {
-      XBcoord.push_back(Xcoord_Bounds[iVertex]);
-      YBcoord.push_back(Ycoord_Bounds[iVertex]);
-      ZBcoord.push_back(Zcoord_Bounds[iVertex]);
-    }
-
-  }
-
-  cout << "Bound Normals: " << endl;
-  for (iVertex = 0; iVertex < Xcoord.size(); iVertex++) {
-      cout << ZB_Normal[iVertex] << endl;
-  }
-
-  /*--- Order the arrays using the X component ---*/
-
-  for (iVertex = 0; iVertex < Xcoord.size(); iVertex++) {
-    for (jVertex = 0; jVertex < Xcoord.size() - 1 - iVertex; jVertex++) {
-      if (Xcoord[jVertex] > Xcoord[jVertex+1]) {
-        auxXCoord = Xcoord[jVertex]; Xcoord[jVertex] = Xcoord[jVertex+1]; Xcoord[jVertex+1] = auxXCoord;
-        auxYCoord = Ycoord[jVertex]; Ycoord[jVertex] = Ycoord[jVertex+1]; Ycoord[jVertex+1] = auxYCoord;
-        auxZCoord = Zcoord[jVertex]; Zcoord[jVertex] = Zcoord[jVertex+1]; Zcoord[jVertex+1] = auxZCoord;
-      }
-    }
-  }
-
-  /*--- (Bounds) Order the arrays using the X component ---*/
-
-  for (iVertex = 0; iVertex < XBcoord.size(); iVertex++) {
-    for (jVertex = 0; jVertex < XBcoord.size() - 1 - iVertex; jVertex++) {
-      if (XBcoord[jVertex] > XBcoord[jVertex+1]) {
-        auxXBcoord = XBcoord[jVertex]; XBcoord[jVertex] = XBcoord[jVertex+1]; XBcoord[jVertex+1] = auxXBcoord;
-        auxYBcoord = YBcoord[jVertex]; YBcoord[jVertex] = YBcoord[jVertex+1]; YBcoord[jVertex+1] = auxYBcoord;
-        auxZBcoord = ZBcoord[jVertex]; ZBcoord[jVertex] = ZBcoord[jVertex+1]; ZBcoord[jVertex+1] = auxZBcoord;
-      }
-    }
-  }
-
-  /*----- Regular Thickness Calculation -----*/
-
-  cout << "Airfoil Coordinates: " << endl;
-  for (iVertex = 0; iVertex < Xcoord.size(); iVertex++) {
-      cout << Xcoord[iVertex] << " " << Ycoord[iVertex] << " " << Zcoord[iVertex] << " " << endl;
-  }
-  //cout << endl;
-
-  n = Xcoord.size();
-  if (n > 1) {
-    zp1 = (Zcoord[1]-Zcoord[0])/(Xcoord[1]-Xcoord[0]);
-    zpn = (Zcoord[n-1]-Zcoord[n-2])/(Xcoord[n-1]-Xcoord[n-2]);
-    Z2coord.resize(n+1);
-    SetSpline(Xcoord, Zcoord, n, zp1, zpn, Z2coord);
-    cout << "Spline set Z2coord size: " << Z2coord.size() << endl;
-    for (iVertex = 0; iVertex < Z2coord.size(); iVertex++) {
-          cout << Z2coord[iVertex] << ", ";
-    }
-    cout << endl;
-
-    /*--- Compute the thickness (we add a fabs because we can not guarantee the
-     right sorting of the points and the upper and/or lower part of the airfoil is not well defined) ---*/
-
-    MaxVal = -100.0;
-    MinVal = 100.0;
-    MinThickness_Value = 100.0;
-    for (iVertex = 0; iVertex < Xcoord_Airfoil_.size(); iVertex++) {
-      if (Zcoord_Normal[iVertex] < 0.0) {
-        Thicknesses.push_back(fabs(Zcoord_Airfoil_[iVertex] - GetSpline(Xcoord, Zcoord, Z2coord, n, Xcoord_Airfoil_[iVertex])));
-        //cout << Thickness << endl;
-        //if (Thickness < MinVal) { MinVal = Thickness; }
-        //if (Thickness > MaxVal) { MaxVal = Thickness; }
-      }
-    }
-    //if (fabs(MaxVal) > fabs(MinVal) ) {MinThickness_Value = MinVal;}
-    //else {MinThickness_Value = MaxVal;}
-  }
-  else { MinThickness_Value = 0.0; }
-
-
-  /*----- Bound Thickness Calculation -----*/
-
-  cout << "Airfoil Bound Coordinates: " << endl;
-  for (iVertex = 0; iVertex < XBcoord.size(); iVertex++) {
-      cout << XBcoord[iVertex] << ", " << YBcoord[iVertex] << ", " << ZBcoord[iVertex] << ", " << endl;
-  }
-  cout << endl;
-
-  n = XBcoord.size();
-  if (n > 1) {
-    zp1 = (ZBcoord[1]-ZBcoord[0])/(XBcoord[1]-XBcoord[0]);
-    zpn = (ZBcoord[n-1]-ZBcoord[n-2])/(XBcoord[n-1]-XBcoord[n-2]);
-    Z2Bcoord.resize(n+1);
-    SetSpline(XBcoord, ZBcoord, n, zp1, zpn, Z2Bcoord);
-    cout << "Spline set Z2Bcoord size: " << Z2Bcoord.size() << endl;
-    for (iVertex = 0; iVertex < Z2Bcoord.size(); iVertex++) {
-          cout << Z2Bcoord[iVertex] << ", ";
-    }
-    cout << endl;
-
-    /*--- Compute the thickness (we add a fabs because we can not guarantee the
-     right sorting of the points and the upper and/or lower part of the airfoil is not well defined) ---*/
-
-    MaxVal = -100.0;
-    MinVal = 100.0;
-    MinThickness_Value = 100.0;
-    for (iVertex = 0; iVertex < XBcoord.size(); iVertex++) {
-      if (ZB_Normal[iVertex] < 0.0) {
-        BThicknesses.push_back(fabs(ZBcoord[iVertex]));// - GetSpline(XBcoord, ZBcoord, Z2Bcoord, n, XBcoord[iVertex])));
-        //cout << Thickness << endl;
-        //if (Thickness < MinVal) { MinVal = Thickness; }
-        //if (Thickness > MaxVal) { MaxVal = Thickness; }
-      }
-    }
-    //if (fabs(MaxVal) > fabs(MinVal) ) {MinThickness_Value = MinVal;}
-    //else {MinThickness_Value = MaxVal;}
-  }
-  else { MinThickness_Value = 0.0; }
-
-  cout << "Base Thicknesses: " << endl;
-  for (iVertex = 0; iVertex < XBcoord.size(); iVertex++) {
-      cout << Thicknesses[iVertex] << ", ";
-  }
-  cout << endl;
-
-  cout << "Bound Thicknesses: " << endl;
-  for (iVertex = 0; iVertex < XBcoord.size(); iVertex++) {
-      cout << BThicknesses[iVertex] << ", ";
-  }
-  cout << endl;
-
-  cout << config->GetMesh_FileName() << endl;
-  cout << config->GetAirfoilBounds_FileName() << endl;
-  for (iVertex = 0; iVertex < Xcoord_Airfoil_.size(); iVertex++) {
-      //cout << Zcoord_Airfoil[iVertex]<< endl;
-  }
-  cout << "computing min thickness";
 
   getchar();
 
