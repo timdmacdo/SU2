@@ -15497,7 +15497,7 @@ void CPhysicalGeometry::Check_Periodicity(CConfig *config) {
 
 su2double CPhysicalGeometry::Compute_MinThickness(su2double *Plane_P0, su2double *Plane_Normal, CConfig *config, vector<su2double> &Xcoord_Airfoil, vector<su2double> &Ycoord_Airfoil, vector<su2double> &Zcoord_Airfoil) {
 
-  vector<su2double> Xcoord, Xcoord_, Xcoord_B, Xcoord_B_, Airfoil_Thickness_B2, Airfoil_Thickness_B_matching_coords;
+  vector<su2double> Xcoord, Xcoord_, Xcoord_B, Xcoord_B_, Airfoil_Thickness_B2, Airfoil_Thickness_B_matching_coords, Xcoord_B__,Xcoord__;
 
   vector<su2double> Airfoil_Thickness = GetThicknessVector(Plane_Normal, Xcoord_Airfoil, Ycoord_Airfoil, Zcoord_Airfoil, Xcoord, Xcoord_);
 
@@ -15564,17 +15564,63 @@ su2double CPhysicalGeometry::Compute_MinThickness(su2double *Plane_P0, su2double
       cout << Airfoil_Thickness_B[index] << " " << Xcoord_B[index] << endl;
   }*/
 
-  n = Xcoord.size();
-  Airfoil_Thickness_B2.resize(n+1);
-  zp1 = (Airfoil_Thickness_B[1]-Airfoil_Thickness_B[0])/(Xcoord_B[1]-Xcoord_B[0]);
-  zpn = (Airfoil_Thickness_B[n-1]-Airfoil_Thickness_B[n-2])/(Xcoord_B[n-1]-Xcoord_B[n-2]);
-  SetSpline(Xcoord_B,Airfoil_Thickness_B,n,zp1,zpn,Airfoil_Thickness_B2);
+  cout << "Airfoil Thickness and X" << endl;
+  for (int index = 0; index < Airfoil_Thickness.size(); index++){
+      cout << Airfoil_Thickness[index] << " " << Xcoord[index] << " " << Xcoord_[index] << endl;
+  }
 
-  for (iVertex = 0; iVertex < Xcoord.size(); iVertex++){
-      cout << "Xcoord point: " << Xcoord[iVertex] << endl;
-      Airfoil_Thickness_B_matching_coords.push_back(GetSpline(Xcoord_B, Airfoil_Thickness_B, Airfoil_Thickness_B2, n, Xcoord_[iVertex]));
+  cout << "Bound Thickness and X" << endl;
+  for (int index = 0; index < Airfoil_Thickness.size(); index++){
+      cout << Airfoil_Thickness_B[index] << " " << Xcoord_B[index] << " " << Xcoord_B_[index] << endl;
+  }
+
+  n = Airfoil_Thickness.size();
+  for (iVertex = 0; iVertex < n; iVertex++){
+      Xcoord__.push_back(Xcoord_[iVertex]);
+  }
+
+  n = Airfoil_Thickness_B.size();
+  for (iVertex = 0; iVertex < n; iVertex++){
+      Xcoord_B__.push_back(Xcoord_B_[iVertex]*-1);
+  }
+  Airfoil_Thickness_B2.resize(n+1);
+  zp1 = (Airfoil_Thickness_B[1]-Airfoil_Thickness_B[0])/(Xcoord_B__[1]-Xcoord_B__[0]);
+  zpn = (Airfoil_Thickness_B[n-1]-Airfoil_Thickness_B[n-2])/(Xcoord_B__[n-1]-Xcoord_B__[n-2]);
+  SetSpline(Xcoord_B__,Airfoil_Thickness_B,n,zp1,zpn,Airfoil_Thickness_B2);
+
+  cout << "Bound Spline Coordinates: " << endl;
+  for (iVertex = 0; iVertex < Xcoord_B__.size(); iVertex++){
+      cout << Xcoord_B__[iVertex] << " " << Airfoil_Thickness_B[iVertex] << endl;
+  }
+  cout << "Zp vals: " << zp1 << " " << zpn << endl;
+
+  cout << "Spline variables:" << endl;
+  cout << "Xcoord_B__" << endl;
+  for (iVertex = 0; iVertex < Xcoord_B__.size(); iVertex++){
+      cout << Xcoord_B__[iVertex] << endl;
+  }
+  cout << "Airfoil_Thickness_B" << endl;
+  for (iVertex = 0; iVertex < Airfoil_Thickness_B.size(); iVertex++){
+      cout << Airfoil_Thickness_B[iVertex] << endl;
+  }
+  cout << "Airfoil_Thickness_B2" << endl;
+  for (iVertex = 0; iVertex < Airfoil_Thickness_B2.size(); iVertex++){
+      cout << Airfoil_Thickness_B2[iVertex] << endl;
+  }
+  cout << "N: " << n << endl;
+  cout << "Xcoord__" << endl;
+  for (iVertex = 0; iVertex < Xcoord__.size(); iVertex++){
+      cout << Xcoord__[iVertex] << endl;
+  }
+
+
+
+  for (iVertex = 0; iVertex < Xcoord__.size(); iVertex++){
+      cout << "Xcoord point: " << Xcoord__[iVertex] << endl;
+      Airfoil_Thickness_B_matching_coords.push_back(GetSpline(Xcoord_B__, Airfoil_Thickness_B, Airfoil_Thickness_B2, n, Xcoord__[iVertex]*-1.));
       cout << "Real Airfoil Thickness: " << Airfoil_Thickness[iVertex] << endl;
       cout << "Bound Thickness: " << Airfoil_Thickness_B_matching_coords[iVertex] << endl;
+      cout << "Vertex: " << iVertex << endl;
       cout << "Diff: " << Airfoil_Thickness[iVertex] - Airfoil_Thickness_B_matching_coords[iVertex]<< endl << endl;
   }
 
