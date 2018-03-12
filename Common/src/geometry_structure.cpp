@@ -15624,7 +15624,7 @@ su2double CPhysicalGeometry::Compute_MinThickness(su2double *Plane_P0, su2double
           cout << Xcoord_B__[jVertex] << " ";
       }
       cout << endl;*/
-      if (Xcoord__[iVertex] < Xcoord_B__[0]){
+      if ((Xcoord__[iVertex] < Xcoord_B__[0]) && (Xcoord__[iVertex] > Xcoord_B__[n-1])){
       //if (true){
         Airfoil_Thickness_B_matching_coords.push_back(Thickness);
         cout << "Test point: " << Xcoord__[iVertex]*-1. << endl;
