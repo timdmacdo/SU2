@@ -15502,7 +15502,7 @@ su2double CPhysicalGeometry::Compute_MinThickness(su2double *Plane_P0, su2double
   vector<su2double> Airfoil_Thickness = GetThicknessVector(Plane_Normal, Xcoord_Airfoil, Ycoord_Airfoil, Zcoord_Airfoil, Xcoord, Xcoord_);
 
   unsigned long iVertex, n;
-  su2double MinThickness_Value = 0, zp1, zpn;
+  su2double MinThickness_Value = 0, zp1, zpn, Thickness;
   ifstream Airfoil_Bound_File;
   string AirfoilBounds_FileName;
   double x,y,z;
@@ -15617,11 +15617,16 @@ su2double CPhysicalGeometry::Compute_MinThickness(su2double *Plane_P0, su2double
 
   for (iVertex = 0; iVertex < Xcoord__.size(); iVertex++){
       cout << "Xcoord point: " << Xcoord__[iVertex] << endl;
-      Airfoil_Thickness_B_matching_coords.push_back(GetSpline(Xcoord_B__, Airfoil_Thickness_B, Airfoil_Thickness_B2, n, Xcoord__[iVertex]*-1.));
+      //if ((Xcoord__[iVertex] < Xcoord_B__[0]) || (Xcoord__[iVertex] > Xcoord_B__[n-1])){
+      Thickness = GetSpline(Xcoord_B__, Airfoil_Thickness_B, Airfoil_Thickness_B2, n, Xcoord__[iVertex]*-1.);
+      if (Xcoord__[iVertex] < Xcoord_B__[0]){
+      Airfoil_Thickness_B_matching_coords.push_back(Thickness);
+      cout << "Test point: " << Xcoord__[iVertex]*-1. << endl;
       cout << "Real Airfoil Thickness: " << Airfoil_Thickness[iVertex] << endl;
       cout << "Bound Thickness: " << Airfoil_Thickness_B_matching_coords[iVertex] << endl;
       cout << "Vertex: " << iVertex << endl;
       cout << "Diff: " << Airfoil_Thickness[iVertex] - Airfoil_Thickness_B_matching_coords[iVertex]<< endl << endl;
+      }
   }
 
   getchar();
