@@ -15502,7 +15502,7 @@ su2double CPhysicalGeometry::Compute_MinThickness(su2double *Plane_P0, su2double
   vector<su2double> Airfoil_Thickness = GetThicknessVector(Plane_Normal, Xcoord_Airfoil, Ycoord_Airfoil, Zcoord_Airfoil, Xcoord, Xcoord_);
 
   unsigned long iVertex, n, jVertex,count;
-  su2double MinThickness_Value = 0, zp1, zpn, Thickness;
+  su2double MinThickness_Value = 0, zp1, zpn, Thickness, thickness_diff;
   ifstream Airfoil_Bound_File;
   string AirfoilBounds_FileName;
   double x,y,z;
@@ -15617,6 +15617,7 @@ su2double CPhysicalGeometry::Compute_MinThickness(su2double *Plane_P0, su2double
   count = 0;
   cout << "XB0 " << Xcoord_B__[0] << endl;
   cout << "XBn " << Xcoord_B__[n-1] << endl;
+  MinThickness_Value = 100.;
   for (iVertex = 0; iVertex < Xcoord__.size(); iVertex++){
       cout << "Xcoord point: " << Xcoord__[iVertex] << endl;
       //if ((Xcoord__[iVertex] < Xcoord_B__[0]) || (Xcoord__[iVertex] > Xcoord_B__[n-1])){
@@ -15629,18 +15630,22 @@ su2double CPhysicalGeometry::Compute_MinThickness(su2double *Plane_P0, su2double
       if ((Xcoord__[iVertex]*-1 > Xcoord_B__[0]) && (Xcoord__[iVertex]*-1 < Xcoord_B__[n-1])){
       //if (true){
         Airfoil_Thickness_B_matching_coords.push_back(Thickness);
-        cout << "Test point: " << Xcoord__[iVertex]*-1. << endl;
+        thickness_diff = Airfoil_Thickness[iVertex] - Airfoil_Thickness_B_matching_coords[count];
+        /*cout << "Test point: " << Xcoord__[iVertex]*-1. << endl;
         cout << "Real Airfoil Thickness: " << Airfoil_Thickness[iVertex] << endl;
         cout << "Bound Thickness: " << Airfoil_Thickness_B_matching_coords[count] << endl;
         cout << "Count: " << count << endl;
         cout << "Matching Vector Length: " << Airfoil_Thickness_B_matching_coords.size() << endl;
         cout << "Vertex: " << iVertex << endl;
-        cout << "Diff: " << Airfoil_Thickness[iVertex] - Airfoil_Thickness_B_matching_coords[count]<< endl << endl;
-        count++;
+        cout << "Diff: " << thickness_diff << endl << endl;
+        count++;*/
+        if (thickness_diff < MinThickness_Value){MinThickness_Value = thickness_diff;}
       }
   }
 
-  getchar();
+  cout << "Min Thickness: " << MinThickness_Value << endl;
+
+  //getchar();
 
   return MinThickness_Value;
 
