@@ -15619,7 +15619,7 @@ su2double CPhysicalGeometry::Compute_MinThickness(su2double *Plane_P0, su2double
   cout << "XBn " << Xcoord_B__[n-1] << endl;
   MinThickness_Value = 100.;
   for (iVertex = 0; iVertex < Xcoord__.size(); iVertex++){
-      cout << "Xcoord point: " << Xcoord__[iVertex] << endl;
+      //cout << "Xcoord point: " << Xcoord__[iVertex] << endl;
       //if ((Xcoord__[iVertex] < Xcoord_B__[0]) || (Xcoord__[iVertex] > Xcoord_B__[n-1])){
       Thickness = GetSpline(Xcoord_B__, Airfoil_Thickness_B, Airfoil_Thickness_B2, n, Xcoord__[iVertex]*-1.);
       /*cout << "Thickness calculated: " << Thickness << endl;
