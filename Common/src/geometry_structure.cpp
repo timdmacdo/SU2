@@ -15631,14 +15631,14 @@ su2double CPhysicalGeometry::Compute_MinThickness(su2double *Plane_P0, su2double
       //if (true){
         Airfoil_Thickness_B_matching_coords.push_back(Thickness);
         thickness_diff = Airfoil_Thickness[iVertex] - Airfoil_Thickness_B_matching_coords[count];
-        /*cout << "Test point: " << Xcoord__[iVertex]*-1. << endl;
+        cout << "Test point: " << Xcoord__[iVertex]*-1. << endl;
         cout << "Real Airfoil Thickness: " << Airfoil_Thickness[iVertex] << endl;
         cout << "Bound Thickness: " << Airfoil_Thickness_B_matching_coords[count] << endl;
         cout << "Count: " << count << endl;
         cout << "Matching Vector Length: " << Airfoil_Thickness_B_matching_coords.size() << endl;
         cout << "Vertex: " << iVertex << endl;
         cout << "Diff: " << thickness_diff << endl << endl;
-        count++;*/
+        count++;
         if (thickness_diff < MinThickness_Value){MinThickness_Value = thickness_diff;}
       }
   }
