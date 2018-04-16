@@ -43,7 +43,106 @@ import sys
 
 from .. import eval as su2eval
 from numpy import array, zeros
+import pyOpt
+import pyOpt.pySNOPT
+import numpy as np
 
+def pySNOPT(project,x0=None,xb=None,its=100,accu=1e-10,grads=True):
+    
+    # handle input cases
+    if x0 is None: x0 = []
+    if xb is None: xb = []
+    
+    # function handles
+    func           = obj_f
+    f_eqcons       = con_ceq
+    f_ieqcons      = con_cieq 
+    
+    # gradient handles
+    if project.config.get('GRADIENT_METHOD','NONE') == 'NONE': 
+        fprime         = None
+        fprime_eqcons  = None
+        fprime_ieqcons = None
+    else:
+        fprime         = obj_df
+        fprime_eqcons  = con_dceq
+        fprime_ieqcons = con_dcieq        
+    
+    # number of design variables
+    dv_size = project.config['DEFINITION_DV']['SIZE']
+    n_dv = sum( dv_size)
+    project.n_dv = n_dv
+    
+    # Initial guess
+    if not x0: x0 = [0.0]*n_dv
+    
+    # prescale x0
+    dv_scales = project.config['DEFINITION_DV']['SCALE']
+    k = 0
+    for i, dv_scl in enumerate(dv_scales):
+        for j in range(dv_size[i]):
+            x0[k] =x0[k]/dv_scl;
+            k = k + 1
+
+    # scale accuracy
+    obj = project.config['OPT_OBJECTIVE']
+    obj_scale = []
+    for this_obj in obj.keys():
+        obj_scale = obj_scale + [obj[this_obj]['SCALE']]
+    
+    # Only scale the accuracy for single-objective problems: 
+    if len(obj.keys())==1:
+        accu = accu*obj_scale[0]
+
+    # scale accuracy
+    eps = 1.0e-04  
+    
+    # ----------------------------
+    #
+    # SNOPT Specific Values
+    #
+    # ----------------------------
+    
+    def snopt_func_base(x, project):
+        f = func(x, project)
+        g = np.hstack([f_ieqcons(x,project),f_eqcons(x,project)])
+        fail = 0
+        return f,g.tolist(),fail
+        
+    snopt_func_final = lambda x:snopt_func_base(x,project)
+            
+    opt_prob = pyOpt.Optimization('SUAVE',snopt_func_final)
+    opt_prob.addObj('Objective')
+    for i,val in enumerate(x0):
+        var_name = 'x' + str(i)
+        opt_prob.addVar(var_name ,'c',lower=xb[i][0],upper=xb[i][1],value=x0[i])
+        
+    for con in project.config['OPT_CONSTRAINT']['INEQUALITY']:
+        bound = project.config['OPT_CONSTRAINT']['INEQUALITY'][con]['VALUE']
+        if project.config['OPT_CONSTRAINT']['INEQUALITY'][con]['SIGN'] == '>':
+            opt_prob.addCon(con ,type='i',lower=0.,upper=np.inf)
+        else:
+            opt_prob.addCon(con ,type='i',lower=-np.inf,upper=0.)
+            
+    for con in project.config['OPT_CONSTRAINT']['EQUALITY']:
+        opt_prob.addCon(con ,type='e',equal=bound)
+        
+    opt = pyOpt.pySNOPT.SNOPT()
+    
+    def grad_function_base(x,f,g,project):
+        g_obj = fprime(x, project)
+        g_con = np.vstack([fprime_ieqcons(x,project),fprime_eqcons(x,project)])
+        fail = 0
+        return g_obj.tolist(),g_con.tolist(),fail
+        
+    grad_function_final = lambda x,f,g:grad_function_base(x,f,g,project)        
+    
+    outputs = opt(opt_prob, sens_type=grad_function_final)
+            
+    print 'Ran SNOPT'
+    print outputs
+    return outputs
+    
 
 # -------------------------------------------------------------------
 #  Scipy SLSQP

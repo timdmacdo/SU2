@@ -167,6 +167,8 @@ def shape_optimization( filename                           ,
       SU2.opt.BFGS(project,x0,xb,its,accu)
     if optimization == 'POWELL':
       SU2.opt.POWELL(project,x0,xb,its,accu)
+    if optimization == 'SNOPT':
+      SU2.opt.SNOPT(project,x0,xb,its,accu)
 
 
     # rename project file
