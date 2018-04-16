@@ -279,7 +279,7 @@ inline su2double CGeometry::Compute_MaxThickness(su2double *Plane_P0, su2double 
 
 inline su2double CGeometry::Compute_MinThickness(su2double *Plane_P0, su2double *Plane_Normal, CConfig *config, vector<su2double> &Xcoord_Airfoil, vector<su2double> &Ycoord_Airfoil, vector<su2double> &Zcoord_Airfoil) { return 0; }
 
-inline vector<su2double> CGeometry::GetThicknessVector(su2double *Plane_Normal, vector<su2double> &Xcoord_Airfoil, vector<su2double> &Ycoord_Airfoil, vector<su2double> &Zcoord_Airfoil, vector<su2double> &Xcoord, vector<su2double> &Xcoord_Airfoil_) {return vector<su2double>{0}; }
+inline vector<su2double> CGeometry::GetThicknessVector(su2double *Plane_Normal, vector<su2double> &Xcoord_Airfoil, vector<su2double> &Ycoord_Airfoil, vector<su2double> &Zcoord_Airfoil, vector<su2double> &Xcoord, vector<su2double> &Xcoord_Airfoil_, vector<su2double> &X_for_z, vector<su2double> &z1, vector<su2double> &z2) {return vector<su2double>{0}; }
 
 inline su2double CGeometry::Compute_Twist(su2double *Plane_P0, su2double *Plane_Normal, vector<su2double> &Xcoord_Airfoil, vector<su2double> &Ycoord_Airfoil, vector<su2double> &Zcoord_Airfoil) { return 0; }
   
