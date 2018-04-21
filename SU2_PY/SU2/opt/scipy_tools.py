@@ -122,7 +122,8 @@ def pySNOPT(project,x0=None,xb=None,its=100,accu=1e-12,grads=True):
         if project.config['OPT_CONSTRAINT']['INEQUALITY'][con]['SIGN'] == '>':
             opt_prob.addCon(con ,type='i',lower=0.,upper=np.inf)
         else:
-            opt_prob.addCon(con ,type='i',lower=-np.inf,upper=0.)
+            #opt_prob.addCon(con ,type='i',lower=-np.inf,upper=0.)
+            opt_prob.addCon(con ,type='i',lower=0.,upper=np.inf) # no change due to ineq functionality in this module
             
     for con in project.config['OPT_CONSTRAINT']['EQUALITY']:
         opt_prob.addCon(con ,type='e',equal=bound)
