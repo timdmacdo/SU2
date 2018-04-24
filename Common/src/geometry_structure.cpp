@@ -15666,6 +15666,8 @@ su2double CPhysicalGeometry::Compute_MinThickness(su2double *Plane_P0, su2double
       }
   }
 
+  cout << "Old Min Thickness: " << MinThickness_Value << endl;
+
   // Check upper surface bound
   vector<su2double> upper_bound_spline_parms;
   su2double surf_z_upper, upper_margin, min_upper_margin;
