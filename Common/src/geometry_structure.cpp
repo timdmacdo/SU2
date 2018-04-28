@@ -15573,10 +15573,10 @@ su2double CPhysicalGeometry::Compute_MinThickness(su2double *Plane_P0, su2double
       zbb = zb1;
   }
 
-  /*cout << "Airfoil Coordinates: " << endl;
+  cout << "Airfoil Coordinates: " << endl;
   for (int index = 0; index < Xcoord_Airfoil.size(); index++){
       cout << Xcoord_Airfoil[index] << " " << Ycoord_Airfoil[index] << " " << Zcoord_Airfoil[index] << ", " << endl;
-  }
+  }/*
 
   cout << "Airfoil Thickness: " << endl;
   for (int index = 0; index < Airfoil_Thickness.size(); index++){
@@ -15685,19 +15685,19 @@ su2double CPhysicalGeometry::Compute_MinThickness(su2double *Plane_P0, su2double
   SetSpline(X_for_zs,zst,n,zp1,zpn,upper_bound_spline_parms);
 
   // Upper Margin Inputs
-  cout << "Surface X Coords" << endl;
+  cout << "Upper Surface X Coords" << endl;
   for (iVertex = 0; iVertex < X_for_zs.size(); iVertex++){
       cout << X_for_zs[iVertex] << endl;
   }
-  cout << "Surface Y Coords" << endl;
+  cout << "Upper Surface Y Coords" << endl;
   for (iVertex = 0; iVertex < zst.size(); iVertex++){
       cout << zst[iVertex] << endl;
   }
-  cout << "Bound X Coords" << endl;
+  cout << "Upper Bound X Coords" << endl;
   for (iVertex = 0; iVertex < X_for_zb.size(); iVertex++){
       cout << X_for_zb[iVertex] << endl;
   }
-  cout << "Bound Y Coords" << endl;
+  cout << "Upper Bound Y Coords" << endl;
   for (iVertex = 0; iVertex < zbt.size(); iVertex++){
       cout << zbt[iVertex] << endl;
   }
@@ -15705,7 +15705,7 @@ su2double CPhysicalGeometry::Compute_MinThickness(su2double *Plane_P0, su2double
   min_upper_margin = 1000.;
   for (iVertex = 0; iVertex < X_for_zb.size(); iVertex++){
       surf_z_upper = GetSpline(X_for_zs, zst, upper_bound_spline_parms, n, X_for_zb[iVertex]*-1.);
-      if ((X_for_zb[iVertex] > 0.05) && (X_for_zb[iVertex] < 0.95)){
+      if ((X_for_zb[iVertex]*-1. > 0.05) && (X_for_zb[iVertex]*-1. < 0.95)){
         upper_margin = surf_z_upper - zbt[iVertex];
         cout << "Test point: " << X_for_zs[iVertex]*-1. << endl;
         cout << "Test point: " << X_for_zb[iVertex]*-1. << endl;
@@ -15727,10 +15727,28 @@ su2double CPhysicalGeometry::Compute_MinThickness(su2double *Plane_P0, su2double
   zp1 = (zsb[n-1]-zsb[n-2])/(X_for_zs[n-1]-X_for_zs[n-2]);
   SetSpline(X_for_zs,zsb,n,zp1,zpn,lower_bound_spline_parms);
 
+  // Upper Margin Inputs
+  cout << "Lower Surface X Coords" << endl;
+  for (iVertex = 0; iVertex < X_for_zs.size(); iVertex++){
+      cout << X_for_zs[iVertex] << endl;
+  }
+  cout << "Lower Surface Y Coords" << endl;
+  for (iVertex = 0; iVertex < zsb.size(); iVertex++){
+      cout << zsb[iVertex] << endl;
+  }
+  cout << "Lower Bound X Coords" << endl;
+  for (iVertex = 0; iVertex < X_for_zb.size(); iVertex++){
+      cout << X_for_zb[iVertex] << endl;
+  }
+  cout << "Lower Bound Y Coords" << endl;
+  for (iVertex = 0; iVertex < zbb.size(); iVertex++){
+      cout << zbb[iVertex] << endl;
+  }
+
   min_lower_margin = 1000.;
   for (iVertex = 0; iVertex < X_for_zb.size(); iVertex++){
       surf_z_lower = GetSpline(X_for_zs, zsb, lower_bound_spline_parms, n, X_for_zb[iVertex]*-1.);
-      if ((X_for_zb[iVertex] > 0.05) && (X_for_zb[iVertex] < 0.95)){
+      if ((X_for_zb[iVertex]*-1. > 0.05) && (X_for_zb[iVertex]*-1. < 0.95)){
         lower_margin = zbb[iVertex] - surf_z_lower;
         cout << "Test point: " << X_for_zs[iVertex]*-1. << endl;
         cout << "Test point: " << X_for_zb[iVertex]*-1. << endl;
