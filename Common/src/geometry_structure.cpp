@@ -15588,6 +15588,8 @@ su2double CPhysicalGeometry::Compute_MinThickness(su2double *Plane_P0, su2double
       cout << Airfoil_Thickness_B[index] << " " << Xcoord_B[index] << endl;
   }*/
 
+  /*
+
   cout << "Airfoil Thickness and X" << endl;
   for (int index = 0; index < Airfoil_Thickness.size(); index++){
       cout << Airfoil_Thickness[index] << " " << Xcoord[index] << " " << Xcoord_[index] << endl;
@@ -15644,12 +15646,12 @@ su2double CPhysicalGeometry::Compute_MinThickness(su2double *Plane_P0, su2double
   for (iVertex = 0; iVertex < Xcoord__.size(); iVertex++){
       //cout << "Xcoord point: " << Xcoord__[iVertex] << endl;
       //if ((Xcoord__[iVertex] < Xcoord_B__[0]) || (Xcoord__[iVertex] > Xcoord_B__[n-1])){
-      Thickness = GetSpline(Xcoord_B__, Airfoil_Thickness_B, Airfoil_Thickness_B2, n, Xcoord__[iVertex]*-1.);
+      Thickness = GetSpline(Xcoord_B__, Airfoil_Thickness_B, Airfoil_Thickness_B2, n, Xcoord__[iVertex]*-1.);*/
       /*cout << "Thickness calculated: " << Thickness << endl;
       for (jVertex = 0; jVertex < Xcoord__.size(); jVertex++){
           cout << Xcoord_B__[jVertex] << " ";
       }
-      cout << endl;*/
+      cout << endl;*//*
       if ((Xcoord__[iVertex]*-1 > 0.05) && (Xcoord__[iVertex]*-1 < 0.95)){
       //if (true){
         Airfoil_Thickness_B_matching_coords.push_back(Thickness);
@@ -15666,7 +15668,8 @@ su2double CPhysicalGeometry::Compute_MinThickness(su2double *Plane_P0, su2double
       }
   }
 
-  cout << "Old Min Thickness: " << MinThickness_Value << endl;
+  cout << "Old Min Thickness: " << MinThickness_Value << endl;*/
+
 
   // Check upper surface bound
   vector<su2double> upper_bound_spline_parms;
@@ -15681,10 +15684,28 @@ su2double CPhysicalGeometry::Compute_MinThickness(su2double *Plane_P0, su2double
   zp1 = (zst[n-1]-zst[n-2])/(X_for_zs[n-1]-X_for_zs[n-2]);
   SetSpline(X_for_zs,zst,n,zp1,zpn,upper_bound_spline_parms);
 
+  // Upper Margin Inputs
+  cout << "Surface X Coords" << endl;
+  for (iVertex = 0; iVertex < X_for_zs.size(); iVertex++){
+      cout << X_for_zs[iVertex] << endl;
+  }
+  cout << "Surface Y Coords" << endl;
+  for (iVertex = 0; iVertex < zst.size(); iVertex++){
+      cout << zst[iVertex] << endl;
+  }
+  cout << "Bound X Coords" << endl;
+  for (iVertex = 0; iVertex < X_for_zb.size(); iVertex++){
+      cout << X_for_zb[iVertex] << endl;
+  }
+  cout << "Bound Y Coords" << endl;
+  for (iVertex = 0; iVertex < zbt.size(); iVertex++){
+      cout << zbt[iVertex] << endl;
+  }
+
   min_upper_margin = 1000.;
   for (iVertex = 0; iVertex < X_for_zb.size(); iVertex++){
       surf_z_upper = GetSpline(X_for_zs, zst, upper_bound_spline_parms, n, X_for_zb[iVertex]*-1.);
-      if ((X_for_zs[iVertex] > 0.05) && (X_for_zs[iVertex] < 0.95)){
+      if ((X_for_zb[iVertex] > 0.05) && (X_for_zb[iVertex] < 0.95)){
         upper_margin = surf_z_upper - zbt[iVertex];
         cout << "Test point: " << X_for_zs[iVertex]*-1. << endl;
         cout << "Test point: " << X_for_zb[iVertex]*-1. << endl;
@@ -15709,7 +15730,7 @@ su2double CPhysicalGeometry::Compute_MinThickness(su2double *Plane_P0, su2double
   min_lower_margin = 1000.;
   for (iVertex = 0; iVertex < X_for_zb.size(); iVertex++){
       surf_z_lower = GetSpline(X_for_zs, zsb, lower_bound_spline_parms, n, X_for_zb[iVertex]*-1.);
-      if ((X_for_zs[iVertex] > 0.05) && (X_for_zs[iVertex] < 0.95)){
+      if ((X_for_zb[iVertex] > 0.05) && (X_for_zb[iVertex] < 0.95)){
         lower_margin = zbb[iVertex] - surf_z_lower;
         cout << "Test point: " << X_for_zs[iVertex]*-1. << endl;
         cout << "Test point: " << X_for_zb[iVertex]*-1. << endl;
@@ -15742,7 +15763,7 @@ su2double CPhysicalGeometry::Compute_MinThickness(su2double *Plane_P0, su2double
 
   cout << "Min Thickness: " << MinThickness_Value << endl;
 
-  //getchar();
+  getchar();
 
   return MinThickness_Value;
 
@@ -15778,10 +15799,12 @@ vector<su2double> CPhysicalGeometry::GetThicknessVector(su2double *Plane_Normal,
       Zcoord_Airfoil_.push_back(Zcoord_Airfoil[iVertex] - Zcoord_Trailing);
     }
 
+    /*
     cout << "Set 1" << endl;
     for (iVertex = 0; iVertex < Xcoord_Airfoil_.size(); iVertex++) {
         cout << Xcoord_Airfoil_[iVertex] << " " << Zcoord_Airfoil_[iVertex] << endl;
     }
+    */
 
     /*--- Rotate the airfoil ---*/
 
@@ -15795,10 +15818,12 @@ vector<su2double> CPhysicalGeometry::GetThicknessVector(su2double *Plane_Normal,
       Zcoord_Airfoil_[iVertex] = ZValue*ValCos + XValue*ValSin;
     }
 
+
     cout << "Set 2" << endl;
     for (iVertex = 0; iVertex < Xcoord_Airfoil_.size(); iVertex++) {
         cout << Xcoord_Airfoil_[iVertex] << " " << Zcoord_Airfoil_[iVertex] << endl;
     }
+
 
 
     /*--- Identify upper and lower side for main airfoil, and store the value of the normal --*/
@@ -15836,10 +15861,12 @@ vector<su2double> CPhysicalGeometry::GetThicknessVector(su2double *Plane_Normal,
 
     }
 
+    /*
     cout << "Set 3" << endl;
     for (iVertex = 0; iVertex < Xcoord.size(); iVertex++) {
         cout << Xcoord[iVertex] << " " << Zcoord[iVertex] << endl;
     }
+    */
 
     /*--- Order the arrays using the X component ---*/
 
@@ -15853,10 +15880,12 @@ vector<su2double> CPhysicalGeometry::GetThicknessVector(su2double *Plane_Normal,
       }
     }
 
+    /*
     cout << "Set 4" << endl;
     for (iVertex = 0; iVertex < Xcoord.size(); iVertex++) {
         cout << Xcoord[iVertex] << " " << Zcoord[iVertex] << endl;
     }
+    */
 
     /*cout << "Printing Xcoord and Xcoord_Airfoil_ after sorting" << endl;
     for (iVertex = 0; iVertex < Xcoord.size(); iVertex++) {
@@ -15884,13 +15913,13 @@ vector<su2double> CPhysicalGeometry::GetThicknessVector(su2double *Plane_Normal,
       MinVal = 100.0;
       MinThickness_Value = 100.0;
       cout << "Set 5" << endl;
-      for (iVertex = 0; iVertex < Xcoord_Airfoil_.size(); iVertex++) {
+      for (iVertex = 0; iVertex < Xcoord_Airfoil_.size()-2; iVertex++) { // -2 added to avoid bad values in thinness calculation
         if (Zcoord_Normal[iVertex] < 0.0) {
           Thicknesses.push_back(fabs(Zcoord_Airfoil_[iVertex] - GetSpline(Xcoord, Zcoord, Z2coord, n, Xcoord_Airfoil_[iVertex])));
           X_for_z.push_back(Xcoord_Airfoil_[iVertex]);
           z1.push_back(Zcoord_Airfoil_[iVertex]);
           z2.push_back(GetSpline(Xcoord, Zcoord, Z2coord, n, Xcoord_Airfoil_[iVertex]));
-          cout << Thicknesses[iVertex] << ", " << Xcoord_Airfoil_[iVertex] << ", " << Zcoord_Airfoil_[iVertex] << ", " << Zcoord_Normal[iVertex] << endl;
+          //cout << Thicknesses[iVertex] << ", " << Xcoord_Airfoil_[iVertex] << ", " << Zcoord_Airfoil_[iVertex] << ", " << Zcoord_Normal[iVertex] << endl;
         }
         /*else{
           cout << Xcoord_Airfoil_[iVertex] << ", " << Zcoord_Airfoil_[iVertex] << ", " << "0" << ", " << Zcoord_Normal[iVertex] << endl;
