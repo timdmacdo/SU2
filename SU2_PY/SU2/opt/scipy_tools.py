@@ -103,7 +103,7 @@ def pySNOPT(project,x0=None,xb=None,its=100,accu=1e-12,grads=True):
     #
     # ----------------------------
     
-    def snopt_func_base(x, project):
+    def snopt_func_base(x, project):     
         f = func(x, project)
         g = np.hstack([f_ieqcons(x,project),f_eqcons(x,project)])
         fail = 0
@@ -139,6 +139,7 @@ def pySNOPT(project,x0=None,xb=None,its=100,accu=1e-12,grads=True):
     grad_function_final = lambda x,f,g:grad_function_base(x,f,g,project)        
     
     opt.setOption('Function precision', accu)
+    opt.setOption('Verify level',0)
     opt.setOption('Major optimality tolerance',eps)
     outputs = opt(opt_prob, sens_type=grad_function_final)
             
