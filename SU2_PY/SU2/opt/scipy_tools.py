@@ -89,6 +89,14 @@ def pySNOPT(project,x0=None,xb=None,its=100,accu=1e-12,grads=True):
     obj_scale = []
     for this_obj in obj.keys():
         obj_scale = obj_scale + [obj[this_obj]['SCALE']]
+        
+    ieq_cons = project.config['OPT_CONSTRAINT']['INEQUALITY']
+    ieq_cons_scale = []
+    for this_con in ieq_cons.keys():
+        ieq_cons_scale = ieq_cons_scale + [ieq_cons[this_con]['SCALE']] 
+        
+    if len(project.config['OPT_CONSTRAINT']['EQUALITY']) > 0:
+        raise NotImplementedError('Equality constaints have not been implemented for SU2 <-> SNOPT')
     
     # Only scale the accuracy for single-objective problems: 
     if len(obj.keys())==1:
@@ -107,6 +115,7 @@ def pySNOPT(project,x0=None,xb=None,its=100,accu=1e-12,grads=True):
         f = func(x, project)
         g = np.hstack([f_ieqcons(x,project),f_eqcons(x,project)])
         fail = 0
+        #f *= obj_scale
         return f,g.tolist(),fail
         
     snopt_func_final = lambda x:snopt_func_base(x,project)
@@ -134,6 +143,7 @@ def pySNOPT(project,x0=None,xb=None,its=100,accu=1e-12,grads=True):
         g_obj = fprime(x, project)
         g_con = np.vstack([fprime_ieqcons(x,project),fprime_eqcons(x,project)])
         fail = 0
+        g_con = np.transpose(np.atleast_2d(ieq_cons_scale))*g_con
         return g_obj.tolist(),g_con.tolist(),fail
         
     grad_function_final = lambda x,f,g:grad_function_base(x,f,g,project)        
