@@ -80,6 +80,7 @@ def pySNOPT(project,x0=None,xb=None,its=100,accu=1e-12,grads=True):
     dv_scales = project.config['DEFINITION_DV']['SCALE']
     k = 0
     for i, dv_scl in enumerate(dv_scales):
+        dv_scales[i] = 1000.
         for j in range(dv_size[i]):
             x0[k] =x0[k]/dv_scl;
             k = k + 1
@@ -89,11 +90,13 @@ def pySNOPT(project,x0=None,xb=None,its=100,accu=1e-12,grads=True):
     obj_scale = []
     for this_obj in obj.keys():
         obj_scale = obj_scale + [obj[this_obj]['SCALE']]
+    obj_scale = [100.]
         
     ieq_cons = project.config['OPT_CONSTRAINT']['INEQUALITY']
     ieq_cons_scale = []
     for this_con in ieq_cons.keys():
         ieq_cons_scale = ieq_cons_scale + [ieq_cons[this_con]['SCALE']] 
+    ieq_cons_scale = [100.,100.,1000.]
         
     if len(project.config['OPT_CONSTRAINT']['EQUALITY']) > 0:
         raise NotImplementedError('Equality constaints have not been implemented for SU2 <-> SNOPT')
@@ -111,12 +114,17 @@ def pySNOPT(project,x0=None,xb=None,its=100,accu=1e-12,grads=True):
     #
     # ----------------------------
     
-    def snopt_func_base(x, project):     
+    def snopt_func_base(xs, project):
+        x = xs*1
+        for i, val in enumerate(xs):
+            x[i] = x[i]/dv_scales[i]
         f = func(x, project)
+        fs = f*obj_scale[0]
         g = np.hstack([f_ieqcons(x,project),f_eqcons(x,project)])
+        gs = g*ieq_cons_scale
         fail = 0
         #f *= obj_scale
-        return f,g.tolist(),fail
+        return fs,gs.tolist(),fail
         
     snopt_func_final = lambda x:snopt_func_base(x,project)
             
@@ -124,7 +132,7 @@ def pySNOPT(project,x0=None,xb=None,its=100,accu=1e-12,grads=True):
     opt_prob.addObj('Objective')
     for i,val in enumerate(x0):
         var_name = 'x' + str(i)
-        opt_prob.addVar(var_name ,'c',lower=xb[i][0],upper=xb[i][1],value=x0[i])
+        opt_prob.addVar(var_name ,'c',lower=xb[i][0]*dv_scales[i],upper=xb[i][1]*dv_scales[i],value=x0[i]) # final value already scaled
         
     for con in project.config['OPT_CONSTRAINT']['INEQUALITY']:
         bound = project.config['OPT_CONSTRAINT']['INEQUALITY'][con]['VALUE']
@@ -139,17 +147,25 @@ def pySNOPT(project,x0=None,xb=None,its=100,accu=1e-12,grads=True):
         
     opt = pyOpt.pySNOPT.SNOPT()
     
-    def grad_function_base(x,f,g,project):
+    def grad_function_base(xs,fs,gs,project):
+        x = xs*1
+        for i, val in enumerate(x):
+            x[i] = x[i]/dv_scales[i]        
         g_obj = fprime(x, project)
+        g_obj_s = g_obj*1
+        for i, val in enumerate(dv_scales):
+            g_obj_s[i] = g_obj[i]*obj_scale[0]/dv_scales[i]
         g_con = np.vstack([fprime_ieqcons(x,project),fprime_eqcons(x,project)])
+        g_con_s = g_con*1
+        for i, val in enumerate(dv_scales):
+            g_con = g_con/np.transpose(np.atleast_2d(ieq_cons_scale))
         fail = 0
-        g_con = np.transpose(np.atleast_2d(ieq_cons_scale))*g_con
         return g_obj.tolist(),g_con.tolist(),fail
         
     grad_function_final = lambda x,f,g:grad_function_base(x,f,g,project)        
     
     opt.setOption('Function precision', accu)
-    opt.setOption('Verify level',0)
+    opt.setOption('Verify level',3)
     opt.setOption('Major optimality tolerance',eps)
     outputs = opt(opt_prob, sens_type=grad_function_final)
             
