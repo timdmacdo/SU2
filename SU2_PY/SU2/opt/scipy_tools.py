@@ -77,7 +77,7 @@ def pySNOPT(project,x0=None,xb=None,its=100,accu=1e-12,grads=True):
     if not x0: x0 = [0.0]*n_dv
     
     # prescale x0
-    dv_scales = project.config['DEFINITION_DV']['SCALE']
+    dv_scales = project.config['DEFINITION_DV']['SCALE']*1
     k = 0
     for i, dv_scl in enumerate(dv_scales):
         dv_scales[i] = 1000.
@@ -115,6 +115,7 @@ def pySNOPT(project,x0=None,xb=None,its=100,accu=1e-12,grads=True):
     # ----------------------------
     
     def snopt_func_base(xs, project):
+        # s indicated SNOPT, otherwise they are direct SU2 inputs/outputs
         x = xs*1
         for i, val in enumerate(xs):
             x[i] = x[i]/dv_scales[i]
@@ -148,6 +149,7 @@ def pySNOPT(project,x0=None,xb=None,its=100,accu=1e-12,grads=True):
     opt = pyOpt.pySNOPT.SNOPT()
     
     def grad_function_base(xs,fs,gs,project):
+        # s indicated SNOPT, otherwise they are direct SU2 inputs/outputs
         x = xs*1
         for i, val in enumerate(x):
             x[i] = x[i]/dv_scales[i]        
@@ -158,9 +160,9 @@ def pySNOPT(project,x0=None,xb=None,its=100,accu=1e-12,grads=True):
         g_con = np.vstack([fprime_ieqcons(x,project),fprime_eqcons(x,project)])
         g_con_s = g_con*1
         for i, val in enumerate(dv_scales):
-            g_con = g_con/np.transpose(np.atleast_2d(ieq_cons_scale))
+            g_con_s[:,i] = g_con_s[:,i]*np.atleast_2d(ieq_cons_scale)/dv_scales[i]
         fail = 0
-        return g_obj.tolist(),g_con.tolist(),fail
+        return g_obj_s.tolist(),g_con_s.tolist(),fail
         
     grad_function_final = lambda x,f,g:grad_function_base(x,f,g,project)        
     
