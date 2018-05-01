@@ -168,13 +168,13 @@ def shape_optimization( filename                           ,
     if optimization == 'POWELL':
       SU2.opt.POWELL(project,x0,xb,its,accu)
     if optimization == 'SNOPT':
-      SU2.opt.SNOPT(project,x0,xb,its,accu)
+      outputs = SU2.opt.SNOPT(project,x0,xb,its,accu)
 
 
     # rename project file
     if projectname:
         shutil.move('project.pkl',projectname)
-    
+    project.outputs = outputs
     return project
 
 #: shape_optimization()
