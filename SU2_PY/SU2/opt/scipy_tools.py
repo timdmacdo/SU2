@@ -169,7 +169,7 @@ def pySNOPT(project,x0=None,xb=None,its=100,accu=1e-12,grads=True):
     opt.setOption('Function precision', accu)
     opt.setOption('Verify level',0)
     opt.setOption('Major optimality tolerance',eps)
-    opt.setOption('Major iterations limit',15)
+    opt.setOption('Major iterations limit',its)
     outputs = opt(opt_prob, sens_type=grad_function_final)
             
     print 'Ran SNOPT'
