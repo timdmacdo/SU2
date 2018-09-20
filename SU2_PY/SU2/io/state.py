@@ -229,7 +229,10 @@ class State(ordered_bunch):
         files = self.FILES
         
         mesh_name     = config.MESH_FILENAME
-        bounds_name   = config.AIRFOIL_BOUNDS
+        try:
+            bounds_name   = config.AIRFOIL_BOUNDS
+        except:
+            pass
         direct_name   = config.SOLUTION_FLOW_FILENAME
         adjoint_name  = config.SOLUTION_ADJ_FILENAME
         targetea_name = 'TargetEA.dat'
@@ -270,7 +273,10 @@ class State(ordered_bunch):
 
         # mesh
         register_file('MESH',mesh_name)
-        register_file('AIRFOIL_BOUNDS',bounds_name)
+        try:
+            register_file('AIRFOIL_BOUNDS',bounds_name)
+        except:
+            pass
         
         # direct solution
         if restart:

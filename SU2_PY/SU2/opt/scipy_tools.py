@@ -106,7 +106,7 @@ def pySNOPT(project,x0=None,xb=None,its=100,accu=1e-12,grads=True):
         accu = accu*obj_scale[0]
 
     # scale accuracy
-    eps = 1.0e-04  
+    eps = 1.0e-06
     
     # ----------------------------
     #
