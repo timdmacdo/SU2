@@ -189,6 +189,7 @@ def get_headerMap(nZones = 1):
     history_header_map = { "Iteration"       : "ITERATION"               ,
                  "CL"              : "LIFT"                    ,
                  "CD"              : "DRAG"                    ,
+                 "CD_COR"          : "CORRECTED_DRAG"          ,
                  "CSF"             : "SIDEFORCE"               ,
                  "Cp_Diff"         : "INVERSE_DESIGN_PRESSURE" ,
                  "HeatFlux_Diff"   : "INVERSE_DESIGN_HEATFLUX" ,
@@ -291,7 +292,8 @@ optnames_aero = [ "LIFT"                    ,
                   "INVERSE_DESIGN_HEATFLUX" ,
                   "TOTAL_HEATFLUX"          ,
                   "MAXIMUM_HEATFLUX"        ,
-                  "CUSTOM_OBJFUNC"             ,
+                  "CUSTOM_OBJFUNC"          ,
+                  "CORRECTED_DRAG"          ,
                   "COMBO"]
 
 # Turbo performance optimizer Function Names
@@ -577,6 +579,7 @@ def get_adjointSuffix(objective_function=None):
     
     # adjoint name map
     name_map = { "DRAG"                    : "cd"        ,
+                 "CORRECTED_DRAG"          : "cd_cor"    ,
                  "LIFT"                    : "cl"        ,
                  "SIDEFORCE"               : "csf"       ,
                  "MOMENT_X"                : "cmx"       ,

@@ -5726,6 +5726,7 @@ void CEulerSolver::Pressure_Forces(CGeometry *geometry, CConfig *config) {
   /*--- Update the total coefficients (note that all the nodes have the same value) ---*/
   
   Total_CD            = AllBound_CD_Inv;
+  Total_Custom_ObjFunc = AllBound_CD_Inv;
   Total_CL            = AllBound_CL_Inv;
   Total_CSF           = AllBound_CSF_Inv;
   Total_CEff          = Total_CL / (Total_CD + EPS);
@@ -6099,6 +6100,7 @@ void CEulerSolver::Momentum_Forces(CGeometry *geometry, CConfig *config) {
   /*--- Update the total coefficients (note that all the nodes have the same value) ---*/
   
   Total_CD            += AllBound_CD_Mnt;
+  Total_Custom_ObjFunc += AllBound_CD_Mnt;
   Total_CL            += AllBound_CL_Mnt;
   Total_CSF           += AllBound_CSF_Mnt;
   Total_CEff          = Total_CL / (Total_CD + EPS);
@@ -8688,6 +8690,10 @@ void CEulerSolver::Evaluate_ObjFunc(CConfig *config) {
 
     switch(Kind_ObjFunc) {
       case DRAG_COEFFICIENT:
+        cout << "Computing drag coefficient" << endl;
+        cout << "Total drag: " << Surface_CD[iMarker_Monitoring] << endl;
+        cout << "Inv drag: " << Surface_CD_Inv[iMarker_Monitoring] << endl;
+        cout << "Visc drag: " << (Surface_CD[iMarker_Monitoring]-Surface_CD_Inv[iMarker_Monitoring]) << endl;
         Total_ComboObj+=Weight_ObjFunc*(Surface_CD[iMarker_Monitoring]);
         if (config->GetFixed_CL_Mode()) Total_ComboObj -= Weight_ObjFunc*config->GetdCD_dCL()*(Surface_CL[iMarker_Monitoring]);
         if (config->GetFixed_CM_Mode()) Total_ComboObj -= Weight_ObjFunc*config->GetdCD_dCMy()*(Surface_CMy[iMarker_Monitoring]);
@@ -8766,7 +8772,16 @@ void CEulerSolver::Evaluate_ObjFunc(CConfig *config) {
         Total_ComboObj+=Weight_ObjFunc*config->GetSurface_Mach(0);
         break;
       case CUSTOM_OBJFUNC:
-        Total_ComboObj+=Weight_ObjFunc*Total_Custom_ObjFunc;
+        cout << "Computing custom objective" << endl;
+        Total_ComboObj+=Weight_ObjFunc*(Surface_CD_Inv[iMarker_Monitoring]*1.+(Surface_CD[iMarker_Monitoring]-Surface_CD_Inv[iMarker_Monitoring])*1.);
+        cout << "Custom objective: " << Total_ComboObj << endl;
+        if (config->GetFixed_CL_Mode()) Total_ComboObj -= Weight_ObjFunc*config->GetdCD_dCL()*(Surface_CL[iMarker_Monitoring]);
+        if (config->GetFixed_CM_Mode()) Total_ComboObj -= Weight_ObjFunc*config->GetdCD_dCMy()*(Surface_CMy[iMarker_Monitoring]);
+        break;
+      case CORRECTED_DRAG_COFFICIENT:
+        Total_ComboObj+=Weight_ObjFunc*(Surface_CD_Inv[iMarker_Monitoring]*1.+(Surface_CD[iMarker_Monitoring]-Surface_CD_Inv[iMarker_Monitoring])*1.);
+        if (config->GetFixed_CL_Mode()) Total_ComboObj -= Weight_ObjFunc*config->GetdCD_dCL()*(Surface_CL[iMarker_Monitoring]);
+        if (config->GetFixed_CM_Mode()) Total_ComboObj -= Weight_ObjFunc*config->GetdCD_dCMy()*(Surface_CMy[iMarker_Monitoring]);
         break;
       default:
         break;
@@ -16581,6 +16596,7 @@ void CNSSolver::Friction_Forces(CGeometry *geometry, CConfig *config) {
   /*--- Update the total coefficients (note that all the nodes have the same value)---*/
   
   Total_CD          += AllBound_CD_Visc;
+  Total_Custom_ObjFunc += 1.*AllBound_CD_Visc;
   Total_CL          += AllBound_CL_Visc;
   Total_CSF         += AllBound_CSF_Visc;
   Total_CEff        = Total_CL / (Total_CD + EPS);

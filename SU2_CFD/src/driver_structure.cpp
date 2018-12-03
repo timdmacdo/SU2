@@ -3919,6 +3919,8 @@ void CDiscAdjFluidDriver::SetObjFunction(){
   for (iZone = 0; iZone < nZone; iZone++){
     solver_container[iZone][MESH_0][FLOW_SOL]->Evaluate_ObjFunc(config_container[iZone]);
     ObjFunc += solver_container[iZone][MESH_0][FLOW_SOL]->GetTotal_ComboObj();
+    cout << "ObjFunc (3921): " << ObjFunc << endl;
+    //getchar();
   }
 
   if (rank == MASTER_NODE){
@@ -4041,6 +4043,8 @@ void CDiscAdjTurbomachineryDriver::SetObjFunction(){
   }
 
   ObjFunc = solver_container[ZONE_0][MESH_0][FLOW_SOL]->GetTotal_ComboObj();
+  cout << "ObjFunc (4043): " << ObjFunc << endl;
+  //getchar();
 
   if (rank == MASTER_NODE){
     AD::RegisterOutput(ObjFunc);

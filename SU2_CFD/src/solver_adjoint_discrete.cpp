@@ -396,6 +396,8 @@ void CDiscAdjSolver::RegisterObj_Func(CConfig *config) {
   }
   else{
     ObjFunc_Value = direct_solver->GetTotal_ComboObj();
+    cout << "ObjFunc_Value (398): " << ObjFunc_Value << endl;
+    //getchar();
   }
   if (rank == MASTER_NODE) {
     AD::RegisterOutput(ObjFunc_Value);

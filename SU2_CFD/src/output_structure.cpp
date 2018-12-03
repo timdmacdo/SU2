@@ -4774,6 +4774,9 @@ void COutput::SetConvHistory_Body(ofstream *ConvHist_file,
         Total_CFy      = solver_container[val_iZone][FinestMesh][FLOW_SOL]->GetTotal_CFy();
         Total_CFz      = solver_container[val_iZone][FinestMesh][FLOW_SOL]->GetTotal_CFz();
         Total_ComboObj = solver_container[val_iZone][FinestMesh][FLOW_SOL]->GetTotal_ComboObj();
+        /*cout << "Total_ComboObj (4776): " << Total_ComboObj << endl;
+        cout << "Total_CD (4776): " << Total_ComboObj << endl;
+        getchar();*/
         Total_AoA      = config[val_iZone]->GetAoA() - config[val_iZone]->GetAoA_Offset();
         Total_Custom_ObjFunc = solver_container[val_iZone][FinestMesh][FLOW_SOL]->GetTotal_Custom_ObjFunc();
 

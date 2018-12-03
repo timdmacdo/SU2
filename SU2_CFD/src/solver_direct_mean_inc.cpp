@@ -3175,6 +3175,7 @@ void CIncEulerSolver::Pressure_Forces(CGeometry *geometry, CConfig *config) {
   /*--- Update the total coefficients (note that all the nodes have the same value) ---*/
 
   Total_CD            = AllBound_CD_Inv;
+  Total_ComboObj      = 1.*AllBound_CD_Inv;
   Total_CL            = AllBound_CL_Inv;
   Total_CSF           = AllBound_CSF_Inv;
   Total_CEff          = Total_CL / (Total_CD + EPS);
@@ -7055,6 +7056,7 @@ void CIncNSSolver::Friction_Forces(CGeometry *geometry, CConfig *config) {
   Total_CT          += AllBound_CT_Visc;
   Total_CQ          += AllBound_CQ_Visc;
   Total_CMerit      = AllBound_CT_Visc / (AllBound_CQ_Visc + EPS);
+  Total_ComboObj    += 1.*AllBound_CD_Visc;
   Total_Heat        = AllBound_HF_Visc;
   Total_MaxHeat     = AllBound_MaxHF_Visc;
 

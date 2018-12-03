@@ -426,6 +426,8 @@ void CConfig::SetPointersNull(void) {
   MG_PostSmooth       = NULL;
   Int_Coeffs          = NULL;
 
+  Sweep_Factor        = NULL;
+
   Kind_ObjFunc   = NULL;
 
   Weight_ObjFunc = NULL;
@@ -2010,6 +2012,9 @@ void CConfig::SetConfig_Options(unsigned short val_iZone, unsigned short val_nZo
   
   /* DESCRIPTION: Multipoint design freestream pressure */
   addPythonOption("MULTIPOINT_FREESTREAM_PRESSURE");
+
+  /* DESCRIPTION: Sweep factor for drag correction */
+  addDoubleOption("SWEEP_FACTOR", Sweep_Factor, 0.0);
   
   /* END_CONFIG_OPTIONS */
 
